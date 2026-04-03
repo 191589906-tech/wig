@@ -1,0 +1,4252 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>假发内容创作中心 · 视频策略 + 拍摄脚本</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { font-family: 'Inter', 'Microsoft YaHei', sans-serif; background: #0f172a; color: #e2e8f0; }
+        .card { background: #1e293b; border: 1px solid #334155; border-radius: 12px; }
+        .card:hover { border-color: #0ea5e9; transition: border-color 0.2s; }
+        .prompt-box { background: #0f172a; border: 1px solid #334155; border-radius: 8px; font-family: monospace; }
+        .nav-active { background: #0ea5e9; color: white; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        pre { white-space: pre-wrap; word-break: break-word; font-size: 13px; line-height: 1.6; }
+        .copy-btn { cursor: pointer; background: #334155; border: 1px solid #475569; padding: 4px 12px; border-radius: 6px; font-size: 12px; color: #94a3b8; }
+        .copy-btn:hover { background: #475569; color: #e2e8f0; }
+        .editable { outline: 2px dashed #8b5cf6; outline-offset: 2px; background: rgba(139,92,246,0.1); cursor: text; }
+        .editable:hover { background: rgba(139,92,246,0.2); }
+        .edit-mode-active { background: #10b981 !important; border-color: #10b981 !important; color: white !important; }
+        .nav-sorting { cursor: move !important; }
+        .nav-sorting:hover { background: #f59e0b !important; border-color: #f59e0b !important; }
+        .nav-dragging { opacity: 0.5; transform: scale(1.05); }
+        .nav-drop-target { border: 2px dashed #38bdf8 !important; background: rgba(56,189,248,0.2) !important; }
+        .platform-sorting { cursor: move !important; border: 2px dashed #f59e0b !important; }
+        .platform-dragging { opacity: 0.5; }
+        .platform-drop-target { border: 2px dashed #38bdf8 !important; background: rgba(56,189,248,0.3) !important; }
+        .history-panel { position: fixed; top: 60px; right: 20px; width: 320px; max-height: 400px; background: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 16px; z-index: 1000; box-shadow: 0 10px 40px rgba(0,0,0,0.5); overflow-y: auto; }
+        .history-panel h3 { margin: 0 0 12px 0; font-size: 16px; color: #e2e8f0; }
+        .history-item { background: #0f172a; border: 1px solid #334155; border-radius: 8px; padding: 12px; margin-bottom: 8px; cursor: pointer; transition: all 0.2s; }
+        .history-item:hover { border-color: #f59e0b; background: #1e293b; }
+        .history-item.active { border-color: #10b981; background: rgba(16,185,129,0.1); }
+        .history-time { font-size: 12px; color: #64748b; margin-bottom: 4px; }
+        .history-preview { font-size: 13px; color: #94a3b8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .history-actions { display: flex; gap: 8px; margin-top: 12px; }
+        .history-actions button { flex: 1; padding: 8px; font-size: 12px; border-radius: 6px; cursor: pointer; border: none; }
+        .history-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 999; display: none; }
+        .scene-card { background: linear-gradient(135deg, #1e293b 0%, #162032 100%); border: 1px solid #334155; }
+        .shot-table th { background: #0f172a; }
+        .shot-table tr:nth-child(even) { background: #1e293b; }
+        .shot-table tr:nth-child(odd) { background: #162032; }
+        .type-tag { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; }
+        .t1 { border-left: 4px solid #ef4444; }
+        .t2 { border-left: 4px solid #3b82f6; }
+        .t3 { border-left: 4px solid #10b981; }
+        .t4 { border-left: 4px solid #f59e0b; }
+        .t5 { border-left: 4px solid #8b5cf6; }
+        .t6 { border-left: 4px solid #ec4899; }
+        .t7 { border-left: 4px solid #06b6d4; }
+        .t8 { border-left: 4px solid #f97316; }
+        .platform-tag { display: inline-block; background: #1e3a5f; border: 1px solid #3b82f6; border-radius: 20px; padding: 2px 10px; font-size: 12px; margin: 2px; }
+        .kpi-bar { background: #334155; border-radius: 4px; height: 8px; }
+        .kpi-fill { height: 8px; border-radius: 4px; transition: width 0.3s; }
+        .collapsible { cursor: pointer; }
+        .collapsible-content { max-height: 0; overflow: hidden; transition: max-height 0.3s ease-out; }
+        .collapsible-content.open { max-height: 2000px; }
+        .filter-btn { background: #1e293b; border: 1px solid #334155; padding: 6px 14px; border-radius: 20px; font-size: 13px; cursor: pointer; }
+        .filter-btn:hover, .filter-btn.active { background: #0ea5e9; border-color: #0ea5e9; }
+        .prompt-category { background: #0f172a; border-radius: 8px; padding: 8px 16px; margin: 4px; cursor: pointer; font-size: 13px; border: 1px solid #334155; }
+        .prompt-category:hover, .prompt-category.active { background: #0ea5e9; border-color: #0ea5e9; }
+        .prompt-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px; }
+        .prompt-card { background: #1e293b; border: 1px solid #334155; border-radius: 10px; padding: 16px; }
+        .prompt-card:hover { border-color: #0ea5e9; }
+        .tag { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; margin: 2px; }
+        .gf-filter-btn { background:#1e293b; border:1px solid #334155; padding:6px 14px; border-radius:20px; font-size:13px; cursor:pointer; color:#94a3b8; }
+        .gf-filter-btn:hover, .gf-filter-btn.active { background:linear-gradient(90deg,#4285f4,#34a853); border-color:transparent; color:#fff; }
+        .gf-card { background:#1e293b; border:1px solid #334155; border-radius:12px; overflow:hidden; transition:border-color 0.2s; }
+        .gf-card:hover { border-color:#4285f4; }
+        .gf-card-header { padding:16px; display:flex; justify-content:space-between; align-items:flex-start; gap:10px; cursor:pointer; }
+        .gf-card-body { max-height:0; overflow:hidden; transition:max-height 0.35s ease; }
+        .gf-card-body.open { max-height:3000px; }
+        .gf-shot { background:#0f172a; border-left:3px solid #4285f4; border-radius:0 6px 6px 0; padding:12px 14px; margin-bottom:10px; font-size:12px; line-height:1.7; font-family:monospace; white-space:pre-wrap; }
+    </style>
+</head>
+<body>
+
+<!-- 顶部导航 -->
+<nav style="background:#0f172a; border-bottom:1px solid #1e293b; position:sticky; top:0; z-index:100;">
+    <div style="max-width:1200px; margin:0 auto; padding:0 20px; display:flex; align-items:center; gap:8px; overflow-x:auto; height:52px;">
+        <span style="color:#38bdf8; font-weight:700; white-space:nowrap; margin-right:8px;">💇 假发内容中心</span>
+        <button onclick="showTab('matrix')" id="btn-matrix" class="copy-btn nav-active">内容矩阵</button>
+        <button onclick="showTab('prompts')" id="btn-prompts" class="copy-btn">AI提示词</button>
+        <button onclick="showTab('creative')" id="btn-creative" class="copy-btn">创意提示词</button>
+        <button onclick="showTab('geminiflow')" id="btn-geminiflow" class="copy-btn" style="background:linear-gradient(90deg,#4285f4,#34a853); color:white; border:none;">✨ Gemini Flow</button>
+        <button onclick="showTab('storyboard')" id="btn-storyboard" class="copy-btn">拍摄脚本</button>
+        <button onclick="showTab('workflow')" id="btn-workflow" class="copy-btn">工作流程</button>
+        <button onclick="showTab('platforms')" id="btn-platforms" class="copy-btn">平台适配</button>
+        <button onclick="showTab('imageprompts')" id="btn-imageprompts" class="copy-btn" style="background:linear-gradient(90deg,#ec4899,#8b5cf6); color:white; border:none;">🎨 AI生图</button>
+        <div style="flex:1;"></div>
+        <button onclick="toggleEditMode()" id="btn-editmode" class="copy-btn" style="background:#8b5cf6; color:white; border-color:#8b5cf6;">✏️ 编辑模式</button>
+        <button onclick="savePageChanges()" id="btn-save" class="copy-btn" style="background:#10b981; color:white; border-color:#10b981; display:none;">💾 保存更改</button>
+        <button onclick="toggleHistoryPanel()" id="btn-history" class="copy-btn" style="background:#f59e0b; color:white; border-color:#f59e0b;">📜 历史记录</button>
+    </div>
+</nav>
+
+<div style="max-width:1200px; margin:0 auto; padding:24px 20px;">
+
+<!-- HEADER -->
+<div style="text-align:center; margin-bottom:40px;">
+    <h1 style="font-size:32px; font-weight:700; background:linear-gradient(90deg,#38bdf8,#818cf8); -webkit-background-clip:text; -webkit-text-fill-color:transparent; margin-bottom:8px;">
+        假发产品 · 内容创作中心
+    </h1>
+    <p style="color:#64748b; font-size:15px;">6大视频类型 · 12个拍摄场景 · 84个分镜 · 20+AI提示词 · 33套创意分身模板 · <span style="color:#34a853;">20个Gemini Flow脚本</span></p>
+    <div id="platform-tags-container" style="display:flex; justify-content:center; gap:8px; flex-wrap:wrap; margin-top:12px;">
+        <a href="https://flow.google.com" target="_blank" class="platform-tag-link" style="text-decoration:none;"><span class="platform-tag platform-sortable">Google Flow</span></a>
+        <a href="https://klingai.com" target="_blank" class="platform-tag-link" style="text-decoration:none;"><span class="platform-tag platform-sortable">Kling 可灵</span></a>
+        <a href="https://runwayml.com" target="_blank" class="platform-tag-link" style="text-decoration:none;"><span class="platform-tag platform-sortable">Runway</span></a>
+        <a href="https://jimeng.jianying.com" target="_blank" class="platform-tag-link" style="text-decoration:none;"><span class="platform-tag platform-sortable">即梦</span></a>
+        <a href="https://gemini.google.com" target="_blank" class="platform-tag-link" style="text-decoration:none;"><span class="platform-tag platform-sortable">Google Gemini</span></a>
+        <a href="https://www.tiktok.com" target="_blank" class="platform-tag-link" style="text-decoration:none;"><span class="platform-tag platform-sortable">TikTok</span></a>
+        <a href="https://www.instagram.com" target="_blank" class="platform-tag-link" style="text-decoration:none;"><span class="platform-tag platform-sortable">Instagram</span></a>
+        <a href="https://www.youtube.com" target="_blank" class="platform-tag-link" style="text-decoration:none;"><span class="platform-tag platform-sortable">YouTube</span></a>
+    </div>
+</div>
+
+<!-- ========== TAB 1: 内容矩阵 ========== -->
+<div id="tab-matrix" class="tab-content active">
+    <h2 style="font-size:22px; font-weight:700; color:#38bdf8; margin-bottom:20px;">📊 6大视频类型矩阵</h2>
+    
+    <div class="card" style="margin-bottom:24px; overflow-x:auto;">
+        <table style="width:100%; border-collapse:collapse; font-size:14px;">
+            <thead>
+                <tr>
+                    <th style="padding:12px 16px; text-align:left;">类型</th>
+                    <th style="padding:12px 16px; text-align:left;">核心目标</th>
+                    <th style="padding:12px 16px; text-align:left;">建议时长</th>
+                    <th style="padding:12px 16px; text-align:left;">制作难度</th>
+                    <th style="padding:12px 16px; text-align:left;">传播潜力</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td style="padding:12px 16px;"><span class="type-tag" style="background:#ef4444;">1</span> 口播介绍</td>
+                    <td style="padding:12px 16px; color:#94a3b8;">教育 · 建立信任</td>
+                    <td style="padding:12px 16px;">15–30s</td>
+                    <td style="padding:12px 16px; color:#10b981;">⭐⭐</td>
+                    <td style="padding:12px 16px; color:#f59e0b;">⭐⭐⭐</td>
+                </tr>
+                <tr>
+                    <td style="padding:12px 16px;"><span class="type-tag" style="background:#3b82f6;">2</span> 广告片</td>
+                    <td style="padding:12px 16px; color:#94a3b8;">品牌形象 · 视觉冲击</td>
+                    <td style="padding:12px 16px;">15–30s</td>
+                    <td style="padding:12px 16px; color:#ef4444;">⭐⭐⭐⭐⭐</td>
+                    <td style="padding:12px 16px; color:#10b981;">⭐⭐⭐⭐⭐</td>
+                </tr>
+                <tr>
+                    <td style="padding:12px 16px;"><span class="type-tag" style="background:#10b981;">3</span> 车内日常</td>
+                    <td style="padding:12px 16px; color:#94a3b8;">场景联想 · 生活化</td>
+                    <td style="padding:12px 16px;">15–30s</td>
+                    <td style="padding:12px 16px; color:#10b981;">⭐⭐</td>
+                    <td style="padding:12px 16px; color:#f59e0b;">⭐⭐⭐⭐</td>
+                </tr>
+                <tr>
+                    <td style="padding:12px 16px;"><span class="type-tag" style="background:#f59e0b;">4</span> 教程演示</td>
+                    <td style="padding:12px 16px; color:#94a3b8;">实用价值 · 提升信赖</td>
+                    <td style="padding:12px 16px;">15–30s</td>
+                    <td style="padding:12px 16px; color:#f59e0b;">⭐⭐⭐</td>
+                    <td style="padding:12px 16px; color:#f59e0b;">⭐⭐⭐⭐</td>
+                </tr>
+                <tr>
+                    <td style="padding:12px 16px;"><span class="type-tag" style="background:#8b5cf6;">5</span> 测评对比</td>
+                    <td style="padding:12px 16px; color:#94a3b8;">辅助决策 · 客观性</td>
+                    <td style="padding:12px 16px;">15–30s</td>
+                    <td style="padding:12px 16px; color:#f59e0b;">⭐⭐⭐</td>
+                    <td style="padding:12px 16px; color:#f59e0b;">⭐⭐⭐⭐</td>
+                </tr>
+                <tr>
+                    <td style="padding:12px 16px;"><span class="type-tag" style="background:#ec4899;">6</span> 娱乐创意</td>
+                    <td style="padding:12px 16px; color:#94a3b8;">病毒传播 · 娱乐性</td>
+                    <td style="padding:12px 16px;">15–30s</td>
+                    <td style="padding:12px 16px; color:#f59e0b;">⭐⭐⭐</td>
+                    <td style="padding:12px 16px; color:#10b981;">⭐⭐⭐⭐⭐</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <h3 style="font-size:18px; font-weight:600; color:#e2e8f0; margin-bottom:16px;">🎬 12大拍摄场景速览</h3>
+    <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); gap:16px; margin-bottom:24px;">
+        <div class="scene-card" style="padding:16px; border-radius:10px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                <span style="font-weight:600;">🚗 车内</span>
+                <span style="font-size:11px; color:#64748b;">慵懒午后</span>
+            </div>
+            <div style="font-size:12px; color:#94a3b8;">6个镜头 · 侧逆光 · 日常感</div>
+        </div>
+        <div class="scene-card" style="padding:16px; border-radius:10px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                <span style="font-weight:600;">🛏️ 卧室</span>
+                <span style="font-size:11px; color:#64748b;">晨起梳妆</span>
+            </div>
+            <div style="font-size:12px; color:#94a3b8;">7个镜头 · 窗光 · 私密感</div>
+        </div>
+        <div class="scene-card" style="padding:16px; border-radius:10px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                <span style="font-weight:600;">☕ 咖啡厅</span>
+                <span style="font-size:11px; color:#64748b;">都市休闲</span>
+            </div>
+            <div style="font-size:12px; color:#94a3b8;">7个镜头 · 暖光 · 社交感</div>
+        </div>
+        <div class="scene-card" style="padding:16px; border-radius:10px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                <span style="font-weight:600;">🏋️ 健身房</span>
+                <span style="font-size:11px; color:#64748b;">牢固度展示</span>
+            </div>
+            <div style="font-size:12px; color:#94a3b8;">7个镜头 · 顶光 · 运动感</div>
+        </div>
+        <div class="scene-card" style="padding:16px; border-radius:10px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                <span style="font-weight:600;">🏖️ 海边</span>
+                <span style="font-size:11px; color:#64748b;">度假风情</span>
+            </div>
+            <div style="font-size:12px; color:#94a3b8;">7个镜头 · 逆光 · 大波浪</div>
+        </div>
+        <div class="scene-card" style="padding:16px; border-radius:10px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                <span style="font-weight:600;">💼 办公室</span>
+                <span style="font-size:11px; color:#64748b;">职场干练</span>
+            </div>
+            <div style="font-size:12px; color:#94a3b8;">7个镜头 · 窗光 · OL风</div>
+        </div>
+        <div class="scene-card" style="padding:16px; border-radius:10px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                <span style="font-weight:600;">💻 咖啡厅办公</span>
+                <span style="font-size:11px; color:#64748b;">自由职业</span>
+            </div>
+            <div style="font-size:12px; color:#94a3b8;">7个镜头 · 侧逆光 · 文艺感</div>
+        </div>
+        <div class="scene-card" style="padding:16px; border-radius:10px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                <span style="font-weight:600;">💄 化妆间</span>
+                <span style="font-size:11px; color:#64748b;">佩戴过程</span>
+            </div>
+            <div style="font-size:12px; color:#94a3b8;">7个镜头 · 专业光 · 变身展示</div>
+        </div>
+        <div class="scene-card" style="padding:16px; border-radius:10px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                <span style="font-weight:600;">🍽️ 餐厅</span>
+                <span style="font-size:11px; color:#64748b;">约会氛围</span>
+            </div>
+            <div style="font-size:12px; color:#94a3b8;">7个镜头 · 暖光 · 女神范</div>
+        </div>
+        <div class="scene-card" style="padding:16px; border-radius:10px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                <span style="font-weight:600;">🎤 KTV/酒吧</span>
+                <span style="font-size:11px; color:#64748b;">夜场派对</span>
+            </div>
+            <div style="font-size:12px; color:#94a3b8;">7个镜头 · 彩色光 · 炫酷感</div>
+        </div>
+        <div class="scene-card" style="padding:16px; border-radius:10px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                <span style="font-weight:600;">🌳 公园野餐</span>
+                <span style="font-size:11px; color:#64748b;">自然清新</span>
+            </div>
+            <div style="font-size:12px; color:#94a3b8;">7个镜头 · 自然光 · 真实感</div>
+        </div>
+        <div class="scene-card" style="padding:16px; border-radius:10px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                <span style="font-weight:600;">🤳 对镜自拍</span>
+                <span style="font-size:11px; color:#64748b;">第一视角</span>
+            </div>
+            <div style="font-size:12px; color:#94a3b8;">7个镜头 · 室内光 · 真实分享</div>
+        </div>
+    </div>
+</div>
+
+<!-- ========== TAB 2: AI提示词 ========== -->
+<div id="tab-prompts" class="tab-content">
+    <h2 style="font-size:22px; font-weight:700; color:#38bdf8; margin-bottom:20px;">🤖 AI视频生成提示词库</h2>
+    
+    <!-- 提示词分类筛选 -->
+    <div style="margin-bottom:24px;">
+        <div style="color:#64748b; font-size:13px; margin-bottom:12px;">按分类筛选：</div>
+        <div style="display:flex; flex-wrap:wrap; gap:8px;">
+            <span class="prompt-category active" onclick="filterPrompts('all')">全部</span>
+            <span class="prompt-category" onclick="filterPrompts('product')">产品展示</span>
+            <span class="prompt-category" onclick="filterPrompts('scene')">场景氛围</span>
+            <span class="prompt-category" onclick="filterPrompts('style')">风格造型</span>
+            <span class="prompt-category" onclick="filterPrompts('emotion')">情绪表达</span>
+            <span class="prompt-category" onclick="filterPrompts('detail')">细节特写</span>
+        </div>
+    </div>
+
+    <div id="prompts-container">
+        <!-- 提示词将通过JS动态渲染 -->
+    </div>
+</div>
+
+<!-- ========== TAB 3: 创意提示词分区 ========== -->
+<div id="tab-creative" class="tab-content">
+    <h2 style="font-size:22px; font-weight:700; color:#38bdf8; margin-bottom:20px;">🎬 创意提示词分区 · 即梦/可灵分身专用</h2>
+    <p style="color:#64748b; font-size:13px; margin-bottom:24px;">针对AI视频分镜功能的创意提示词模板，每个都包含详细镜头语言和转场效果</p>
+    
+    <!-- 创意分类筛选 -->
+    <div style="margin-bottom:24px; display:flex; gap:8px; flex-wrap:wrap;">
+        <button class="filter-btn active" onclick="filterCreative('all')">全部</button>
+        <button class="filter-btn" onclick="filterCreative('transform')">变身转场</button>
+        <button class="filter-btn" onclick="filterCreative('showcase')">产品展示</button>
+        <button class="filter-btn" onclick="filterCreative('lifestyle')">生活方式</button>
+        <button class="filter-btn" onclick="filterCreative('emotion')">情绪表达</button>
+        <button class="filter-btn" onclick="filterCreative('interaction')">互动场景</button>
+    </div>
+
+    <div id="creative-container">
+        <!-- 创意提示词将通过JS动态生成 -->
+    </div>
+</div>
+
+<!-- ========== TAB 5: Gemini Flow 专用 ========== -->
+<div id="tab-geminiflow" class="tab-content">
+    <div style="margin-bottom:28px;">
+        <h2 style="font-size:22px; font-weight:700; margin-bottom:8px; background:linear-gradient(90deg,#4285f4,#34a853,#fbbc04,#ea4335); -webkit-background-clip:text; -webkit-text-fill-color:transparent;">✨ Gemini Flow 专用脚本</h2>
+        <p style="color:#64748b; font-size:13px; margin-bottom:16px;">专为 Google Gemini Flow 文生视频优化 · 全英文 · 单镜头描述 · 20个假发场景</p>
+        <div style="background:#1e293b; border:1px solid #334155; border-radius:10px; padding:16px; margin-bottom:20px; font-size:13px; color:#94a3b8;">
+            <span style="color:#fbbc04; font-weight:600;">📌 使用说明：</span>
+            每个脚本含 <strong style="color:#e2e8f0;">4-6个独立镜头</strong>，每段复制后直接粘贴到 Gemini Flow 的 prompt 框即可。
+            镜头之间用 <code style="background:#0f172a; padding:2px 6px; border-radius:4px;">→</code> 连接可尝试生成连贯视频，也可单镜头单独生成再剪辑。
+        </div>
+        <!-- 分类筛选 -->
+        <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:20px;">
+            <button class="gf-filter-btn active" onclick="filterGemini('all', this)">全部 (20)</button>
+            <button class="gf-filter-btn" onclick="filterGemini('transform', this)">🔄 变身转场</button>
+            <button class="gf-filter-btn" onclick="filterGemini('showcase', this)">✨ 产品展示</button>
+            <button class="gf-filter-btn" onclick="filterGemini('lifestyle', this)">🌿 生活方式</button>
+            <button class="gf-filter-btn" onclick="filterGemini('emotion', this)">💫 情绪风格</button>
+            <button class="gf-filter-btn" onclick="filterGemini('scene', this)">🌍 特殊场景</button>
+        </div>
+    </div>
+    <div id="gemini-container" style="display:grid; grid-template-columns:repeat(auto-fill,minmax(340px,1fr)); gap:20px;"></div>
+</div>
+
+<!-- ========== TAB 6: 拍摄脚本 ========== -->
+<div id="tab-storyboard" class="tab-content">
+    <h2 style="font-size:22px; font-weight:700; color:#38bdf8; margin-bottom:20px;">🎬 12场景拍摄脚本分镜</h2>
+    
+    <!-- 过滤器 -->
+    <div style="margin-bottom:20px; display:flex; gap:8px; flex-wrap:wrap;">
+        <button class="filter-btn active" onclick="filterScenes('all')">全部场景</button>
+        <button class="filter-btn" onclick="filterScenes('life')">生活场景</button>
+        <button class="filter-btn" onclick="filterScenes('work')">工作场景</button>
+        <button class="filter-btn" onclick="filterScenes('social')">社交场景</button>
+        <button class="filter-btn" onclick="filterScenes('func')">功能展示</button>
+    </div>
+
+    <div id="scenes-container">
+        <!-- 场景将通过JS动态生成 -->
+    </div>
+</div>
+
+<!-- ========== TAB 5: 工作流程 ========== -->
+<div id="tab-workflow" class="tab-content">
+    <h2 style="font-size:22px; font-weight:700; color:#38bdf8; margin-bottom:20px;">🔄 内容创作工作流程</h2>
+    
+    <div class="card" style="padding:24px; margin-bottom:24px;">
+        <h3 style="font-size:17px; font-weight:700; margin-bottom:20px;">AI视频生成 · 5步标准流程</h3>
+        <div style="display:flex; flex-direction:column; gap:16px;">
+            <div style="display:flex; align-items:flex-start; gap:16px;">
+                <div style="min-width:32px; height:32px; border-radius:50%; background:#0ea5e9; color:white; display:flex; align-items:center; justify-content:center; font-weight:700;">1</div>
+                <div style="flex:1;">
+                    <h4 style="font-weight:600; margin-bottom:4px;">确定内容类型与目标平台</h4>
+                    <p style="color:#94a3b8; font-size:13px;">从6大类型中选择 → 确认目标平台 → 确认宽高比和时长</p>
+                </div>
+            </div>
+            <div style="border-left:2px dashed #334155; height:20px; margin-left:15px;"></div>
+            <div style="display:flex; align-items:flex-start; gap:16px;">
+                <div style="min-width:32px; height:32px; border-radius:50%; background:#0ea5e9; color:white; display:flex; align-items:center; justify-content:center; font-weight:700;">2</div>
+                <div style="flex:1;">
+                    <h4 style="font-weight:600; margin-bottom:4px;">复制并定制提示词</h4>
+                    <p style="color:#94a3b8; font-size:13px;">从提示词库复制模板 → 替换变量 → 检查参数</p>
+                </div>
+            </div>
+            <div style="border-left:2px dashed #334155; height:20px; margin-left:15px;"></div>
+            <div style="display:flex; align-items:flex-start; gap:16px;">
+                <div style="min-width:32px; height:32px; border-radius:50%; background:#0ea5e9; color:white; display:flex; align-items:center; justify-content:center; font-weight:700;">3</div>
+                <div style="flex:1;">
+                    <h4 style="font-weight:600; margin-bottom:4px;">输入AI工具生成</h4>
+                    <p style="color:#94a3b8; font-size:13px;">Google Flow / Kling / Runway → 按段落逐步生成</p>
+                </div>
+            </div>
+            <div style="border-left:2px dashed #334155; height:20px; margin-left:15px;"></div>
+            <div style="display:flex; align-items:flex-start; gap:16px;">
+                <div style="min-width:32px; height:32px; border-radius:50%; background:#0ea5e9; color:white; display:flex; align-items:center; justify-content:center; font-weight:700;">4</div>
+                <div style="flex:1;">
+                    <h4 style="font-weight:600; margin-bottom:4px;">评估与迭代</h4>
+                    <p style="color:#94a3b8; font-size:13px;">检查生成质量 → 不满意则修改重生成 → 记录好用的变体</p>
+                </div>
+            </div>
+            <div style="border-left:2px dashed #334155; height:20px; margin-left:15px;"></div>
+            <div style="display:flex; align-items:flex-start; gap:16px;">
+                <div style="min-width:32px; height:32px; border-radius:50%; background:#10b981; color:white; display:flex; align-items:center; justify-content:center; font-weight:700;">5</div>
+                <div style="flex:1;">
+                    <h4 style="font-weight:600; margin-bottom:4px;">后期处理与发布</h4>
+                    <p style="color:#94a3b8; font-size:13px;">剪辑拼接 → 统一调色 → 添加字幕/音效 → 按平台规格导出 → 排期发布</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card" style="padding:24px;">
+        <h3 style="font-size:17px; font-weight:700; margin-bottom:16px;">📝 提示词定制速查表</h3>
+        <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:12px;">
+            <div style="background:#0f172a; border-radius:8px; padding:14px;">
+                <div style="color:#38bdf8; font-size:12px; font-weight:600; margin-bottom:8px;">镜头运动</div>
+                <div style="font-size:12px; color:#94a3b8; line-height:1.8;">
+                    慢速平移 · 跟随拍摄<br>推进镜头 · 手持晃动<br>低角度仰拍 · 俯拍<br>环绕360° · 快速推进
+                </div>
+            </div>
+            <div style="background:#0f172a; border-radius:8px; padding:14px;">
+                <div style="color:#38bdf8; font-size:12px; font-weight:600; margin-bottom:8px;">灯光</div>
+                <div style="font-size:12px; color:#94a3b8; line-height:1.8;">
+                    柔光箱主光<br>金色时刻逆光<br>轮廓光勾勒<br>自然窗光
+                </div>
+            </div>
+            <div style="background:#0f172a; border-radius:8px; padding:14px;">
+                <div style="color:#38bdf8; font-size:12px; font-weight:600; margin-bottom:8px;">色调</div>
+                <div style="font-size:12px; color:#94a3b8; line-height:1.8;">
+                    奶油暖白<br>金色高光<br>冷调低饱和<br>干净极简
+                </div>
+            </div>
+            <div style="background:#0f172a; border-radius:8px; padding:14px;">
+                <div style="color:#38bdf8; font-size:12px; font-weight:600; margin-bottom:8px;">模特</div>
+                <div style="font-size:12px; color:#94a3b8; line-height:1.8;">
+                    非裔美国人<br>拉丁裔美女<br>混血人种<br>25-35岁
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ========== TAB 6: 平台适配 ========== -->
+<div id="tab-platforms" class="tab-content">
+    <h2 style="font-size:22px; font-weight:700; color:#38bdf8; margin-bottom:20px;">📱 多平台适配规格</h2>
+    
+    <div style="overflow-x:auto;">
+        <table style="width:100%; border-collapse:collapse; font-size:13px; margin-bottom:24px;">
+            <thead>
+                <tr>
+                    <th style="padding:14px 16px; text-align:left;">平台</th>
+                    <th style="padding:14px 16px; text-align:left;">宽高比</th>
+                    <th style="padding:14px 16px; text-align:left;">建议时长</th>
+                    <th style="padding:14px 16px; text-align:left;">最佳内容类型</th>
+                    <th style="padding:14px 16px; text-align:left;">发布时间(美东)</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td style="padding:12px 16px; font-weight:600;">TikTok</td>
+                    <td style="padding:12px 16px;">9:16 竖屏</td>
+                    <td style="padding:12px 16px;">15–30s</td>
+                    <td style="padding:12px 16px;">类型2·3·6</td>
+                    <td style="padding:12px 16px;">7–9PM</td>
+                </tr>
+                <tr>
+                    <td style="padding:12px 16px; font-weight:600;">Instagram Reels</td>
+                    <td style="padding:12px 16px;">9:16 竖屏</td>
+                    <td style="padding:12px 16px;">15–30s</td>
+                    <td style="padding:12px 16px;">类型2·6</td>
+                    <td style="padding:12px 16px;">11AM·7PM</td>
+                </tr>
+                <tr>
+                    <td style="padding:12px 16px; font-weight:600;">YouTube Shorts</td>
+                    <td style="padding:12px 16px;">9:16 竖屏</td>
+                    <td style="padding:12px 16px;">15–30s</td>
+                    <td style="padding:12px 16px;">类型3·6</td>
+                    <td style="padding:12px 16px;">2–4PM</td>
+                </tr>
+                <tr>
+                    <td style="padding:12px 16px; font-weight:600;">YouTube 长视频</td>
+                    <td style="padding:12px 16px;">16:9 横屏</td>
+                    <td style="padding:12px 16px;">3–10分钟</td>
+                    <td style="padding:12px 16px;">类型1·4·5</td>
+                    <td style="padding:12px 16px;">2–4PM</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="card" style="padding:20px;">
+        <h3 style="font-size:16px; font-weight:700; margin-bottom:12px;">🗓️ 每周内容发布计划</h3>
+        <div style="display:grid; grid-template-columns:repeat(7,1fr); gap:8px; text-align:center; font-size:12px;">
+            <div><div style="color:#64748b; margin-bottom:6px;">周一</div><div style="background:#1e3a5f; border-radius:6px; padding:6px; color:#7dd3fc;">类型4<br>教程</div></div>
+            <div><div style="color:#64748b; margin-bottom:6px;">周二</div><div style="background:#1e293b; border-radius:6px; padding:6px; color:#94a3b8;">休息</div></div>
+            <div><div style="color:#64748b; margin-bottom:6px;">周三</div><div style="background:#1c3a2b; border-radius:6px; padding:6px; color:#6ee7b7;">类型3<br>日常</div></div>
+            <div><div style="color:#64748b; margin-bottom:6px;">周四</div><div style="background:#2d1f4f; border-radius:6px; padding:6px; color:#c4b5fd;">类型1<br>口播</div></div>
+            <div><div style="color:#64748b; margin-bottom:6px;">周五</div><div style="background:#1e3a5f; border-radius:6px; padding:6px; color:#93c5fd;">类型2<br>广告</div></div>
+            <div><div style="color:#64748b; margin-bottom:6px;">周六</div><div style="background:#3d1f2d; border-radius:6px; padding:6px; color:#f9a8d4;">类型6<br>创意</div></div>
+            <div><div style="color:#64748b; margin-bottom:6px;">周日</div><div style="background:#1e293b; border-radius:6px; padding:6px; color:#94a3b8;">互动</div></div>
+        </div>
+    </div>
+</div>
+
+<!-- ========== TAB 7: AI生图提示词 ========== -->
+<div id="tab-imageprompts" class="tab-content">
+    <h2 style="font-size:22px; font-weight:700; background:linear-gradient(90deg,#ec4899,#8b5cf6); -webkit-background-clip:text; -webkit-text-fill-color:transparent; margin-bottom:20px;">🎨 AI生图提示词 · 20场景模板库</h2>
+    
+    <div style="background:#1e293b; border:1px solid #334155; border-radius:12px; padding:20px; margin-bottom:24px;">
+        <div style="display:flex; align-items:center; gap:16px; margin-bottom:16px; flex-wrap:wrap;">
+            <span style="font-size:32px;">💇‍♀️</span>
+            <div>
+                <h3 style="font-size:18px; font-weight:700;">假发模特生图专用提示词</h3>
+                <p style="color:#64748b; font-size:13px;">适配 Midjourney · Stable Diffusion · DALL-E · 即梦</p>
+            </div>
+            <div style="flex:1;"></div>
+            <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                <span class="tag" style="background:#1e3a5f; color:#7dd3fc;">20场景</span>
+                <span class="tag" style="background:#1c3a2b; color:#6ee7b7;">6类别</span>
+                <span class="tag" style="background:#3d1f2d; color:#f9a8d4;">8K画质</span>
+            </div>
+        </div>
+        <p style="color:#94a3b8; font-size:14px; line-height:1.6;">
+            基于假发宣传拍摄需求，精心设计的<span style="color:#38bdf8; font-weight:600;">20个不同场景</span>提示词模板。
+            每个模板都包含<span style="color:#38bdf8; font-weight:600;">假发100%还原要求</span>、<span style="color:#38bdf8; font-weight:600;">模特形象设定</span>、<span style="color:#38bdf8; font-weight:600;">场景氛围描述</span>，
+            确保生成的图片能完美展示假发效果。
+        </p>
+    </div>
+
+    <!-- 筛选器 -->
+    <div style="margin-bottom:24px;">
+        <div style="color:#64748b; font-size:13px; margin-bottom:12px; font-weight:500;">按场景筛选：</div>
+        <div style="display:flex; gap:10px; flex-wrap:wrap;">
+            <button class="filter-btn active" onclick="filterImagePrompts('all')">📋 全部场景</button>
+            <button class="filter-btn" onclick="filterImagePrompts('street')">🏙️ 都市街头</button>
+            <button class="filter-btn" onclick="filterImagePrompts('cafe')">☕ 咖啡休闲</button>
+            <button class="filter-btn" onclick="filterImagePrompts('nature')">🌿 自然户外</button>
+            <button class="filter-btn" onclick="filterImagePrompts('fashion')">👗 时尚室内</button>
+            <button class="filter-btn" onclick="filterImagePrompts('night')">🌃 夜景氛围</button>
+            <button class="filter-btn" onclick="filterImagePrompts('lifestyle')">🏠 生活场景</button>
+        </div>
+    </div>
+
+    <!-- 提示词卡片容器 -->
+    <div id="image-prompts-container">
+        <!-- 提示词卡片将通过JS动态生成 -->
+    </div>
+</div>
+
+</div>
+
+<script>
+// ========== AI生图提示词数据 ==========
+const imagePromptsData = [
+    {
+        id: 'img1',
+        category: 'cafe',
+        title: '春日咖啡店门口',
+        icon: '☕',
+        subtitle: '咖啡店门口+春天元素+落地窗',
+        tags: ['咖啡店', '春日', '松弛感'],
+        content: `一个精致性感的年轻欧美白人美女模特，18岁，白人，眉眼魅惑，戴着图中假模头上的假发（渐变+挑染发色大波浪短发），100%还原假模头上假发，跟假模头上假发打理造型形态一样，头发非常浓密头发层次自然，戴上后美丽动人，发量多，风格新潮，年轻面容和善温柔。假发宣传拍摄，面部毛孔清晰，自然肌肤纹理，肤色白里透红，表现自信张扬。ins妆容，亮面唇釉（偏粉调），ins百万网红依靠美丽的图片吸引关注，她穿着紧身设计感风格衣服，画面高级大气。ins风格的背景（站在咖啡店门口+春天的元素+背后有落地窗和颗粒墙面），精致服饰场景的精致感契合，能突出发丝的"层次自然+轻欲质感"，凸显松弛感画面明亮有打光，单手叉腰，肢体摆动作自然松弛抓拍感，表情俏皮，姿势有活力姿势，画面生动人物鲜活，服装有设计感，画面有氛围ins热门图片，画面比例竖版3:4，正面照（坚决不要仰头+不要侧身），佳能相机他人拍摄，8k`
+    },
+    {
+        id: 'img2',
+        category: 'street',
+        title: '纽约街头时尚',
+        icon: '🏙️',
+        subtitle: '纽约街头+黄色出租车+城市背景',
+        tags: ['街头', '都市', '时尚'],
+        content: `一个精致性感的年轻欧美白人美女模特，18岁，白人，眉眼魅惑，戴着图中假模头上的假发（渐变+挑染发色大波浪短发），100%还原假模头上假发，跟假模头上假发打理造型形态一样，头发非常浓密头发层次自然，戴上后美丽动人，发量多，风格新潮，年轻面容和善温柔。假发宣传拍摄，面部毛孔清晰，自然肌肤纹理，肤色白里透红，表现自信张扬。ins妆容，亮面唇釉（偏粉调），ins百万网红依靠美丽的图片吸引关注，她穿着紧身设计感风格衣服，画面高级大气。纽约曼哈顿街头背景（黄色出租车+高楼大厦+城市街道），精致服饰场景的精致感契合，能突出发丝的"层次自然+轻欲质感"，凸显松弛感画面明亮有打光，单手叉腰，肢体摆动作自然松弛抓拍感，表情俏皮带点酷，姿势有活力姿势，画面生动人物鲜活，服装有设计感，画面有氛围ins热门图片，画面比例竖版3:4，正面照（坚决不要仰头+不要侧身），佳能相机他人拍摄，8k`
+    },
+    {
+        id: 'img3',
+        category: 'nature',
+        title: '春日樱花公园',
+        icon: '🌸',
+        subtitle: '樱花树下+粉色花瓣+草地',
+        tags: ['自然', '樱花', '浪漫'],
+        content: `一个精致性感的年轻欧美白人美女模特，18岁，白人，眉眼魅惑，戴着图中假模头上的假发（渐变+挑染发色大波浪短发），100%还原假模头上假发，跟假模头上假发打理造型形态一样，头发非常浓密头发层次自然，戴上后美丽动人，发量多，风格新潮，年轻面容和善温柔。假发宣传拍摄，面部毛孔清晰，自然肌肤纹理，肤色白里透红，表现自信张扬。ins妆容，亮面唇釉（偏粉调），ins百万网红依靠美丽的图片吸引关注，她穿着紧身设计感风格衣服，画面高级大气。春日樱花公园背景（盛开的樱花树+粉色花瓣飘落+绿草地+阳光透过花枝），精致服饰场景的精致感契合，能突出发丝的"层次自然+轻欲质感"，凸显松弛感画面明亮有打光，单手叉腰，肢体摆动作自然松弛抓拍感，表情俏皮甜美，姿势有活力姿势，画面生动人物鲜活，服装有设计感，画面有氛围ins热门图片，画面比例竖版3:4，正面照（坚决不要仰头+不要侧身），佳能相机他人拍摄，8k`
+    },
+    {
+        id: 'img4',
+        category: 'cafe',
+        title: '复古咖啡厅窗边',
+        icon: '🪟',
+        subtitle: '复古咖啡厅+窗边座位+暖光',
+        tags: ['咖啡厅', '复古', '暖光'],
+        content: `一个精致性感的年轻欧美白人美女模特，18岁，白人，眉眼魅惑，戴着图中假模头上的假发（渐变+挑染发色大波浪短发），100%还原假模头上假发，跟假模头上假发打理造型形态一样，头发非常浓密头发层次自然，戴上后美丽动人，发量多，风格新潮，年轻面容和善温柔。假发宣传拍摄，面部毛孔清晰，自然肌肤纹理，肤色白里透红，表现自信张扬。ins妆容，亮面唇釉（偏粉调），ins百万网红依靠美丽的图片吸引关注，她穿着紧身设计感风格衣服，画面高级大气。复古欧式咖啡厅背景（大窗户+木质家具+暖黄色灯光+窗外街景），精致服饰场景的精致感契合，能突出发丝的"层次自然+轻欲质感"，凸显松弛感画面明亮有打光，单手叉腰，肢体摆动作自然松弛抓拍感，表情俏皮慵懒，姿势有活力姿势，画面生动人物鲜活，服装有设计感，画面有氛围ins热门图片，画面比例竖版3:4，正面照（坚决不要仰头+不要侧身），佳能相机他人拍摄，8k`
+    },
+    {
+        id: 'img5',
+        category: 'fashion',
+        title: '极简白色摄影棚',
+        icon: '📸',
+        subtitle: '纯白背景+专业打光+高级感',
+        tags: ['摄影棚', '极简', '高级感'],
+        content: `一个精致性感的年轻欧美白人美女模特，18岁，白人，眉眼魅惑，戴着图中假模头上的假发（渐变+挑染发色大波浪短发），100%还原假模头上假发，跟假模头上假发打理造型形态一样，头发非常浓密头发层次自然，戴上后美丽动人，发量多，风格新潮，年轻面容和善温柔。假发宣传拍摄，面部毛孔清晰，自然肌肤纹理，肤色白里透红，表现自信张扬。ins妆容，亮面唇釉（偏粉调），ins百万网红依靠美丽的图片吸引关注，她穿着紧身设计感风格衣服，画面高级大气。极简白色摄影棚背景（纯白无影墙+专业摄影灯光+柔和阴影），精致服饰场景的精致感契合，能突出发丝的"层次自然+轻欲质感"，凸显松弛感画面明亮有打光，单手叉腰，肢体摆动作自然松弛抓拍感，表情俏皮自信，姿势有活力姿势，画面生动人物鲜活，服装有设计感，画面有氛围ins热门图片，画面比例竖版3:4，正面照（坚决不要仰头+不要侧身），佳能相机他人拍摄，8k`
+    },
+    {
+        id: 'img6',
+        category: 'nature',
+        title: '海边度假沙滩',
+        icon: '🏖️',
+        subtitle: '蔚蓝海水+金色沙滩+阳光',
+        tags: ['海边', '度假', '阳光'],
+        content: `一个精致性感的年轻欧美白人美女模特，18岁，白人，眉眼魅惑，戴着图中假模头上的假发（渐变+挑染发色大波浪短发），100%还原假模头上假发，跟假模头上假发打理造型形态一样，头发非常浓密头发层次自然，戴上后美丽动人，发量多，风格新潮，年轻面容和善温柔。假发宣传拍摄，面部毛孔清晰，自然肌肤纹理，肤色白里透红，表现自信张扬。ins妆容，亮面唇釉（偏粉调），ins百万网红依靠美丽的图片吸引关注，她穿着紧身设计感风格衣服，画面高级大气。海边度假沙滩背景（蔚蓝海水+金色沙滩+椰子树+明媚阳光），精致服饰场景的精致感契合，能突出发丝的"层次自然+轻欲质感"，凸显松弛感画面明亮有打光，单手叉腰，肢体摆动作自然松弛抓拍感，表情俏皮活力，姿势有活力姿势，画面生动人物鲜活，服装有设计感，画面有氛围ins热门图片，画面比例竖版3:4，正面照（坚决不要仰头+不要侧身），佳能相机他人拍摄，8k`
+    },
+    {
+        id: 'img7',
+        category: 'night',
+        title: '霓虹夜景街头',
+        icon: '🌃',
+        subtitle: '霓虹灯牌+夜晚城市+氛围感',
+        tags: ['夜景', '霓虹', '氛围感'],
+        content: `一个精致性感的年轻欧美白人美女模特，18岁，白人，眉眼魅惑，戴着图中假模头上的假发（渐变+挑染发色大波浪短发），100%还原假模头上假发，跟假模头上假发打理造型形态一样，头发非常浓密头发层次自然，戴上后美丽动人，发量多，风格新潮，年轻面容和善温柔。假发宣传拍摄，面部毛孔清晰，自然肌肤纹理，肤色白里透红，表现自信张扬。ins妆容，亮面唇釉（偏粉调），ins百万网红依靠美丽的图片吸引关注，她穿着紧身设计感风格衣服，画面高级大气。霓虹夜景街头背景（彩色霓虹灯牌+夜晚城市街道+车灯流光+湿润地面反光），精致服饰场景的精致感契合，能突出发丝的"层次自然+轻欲质感"，凸显松弛感画面有氛围打光，单手叉腰，肢体摆动作自然松弛抓拍感，表情俏皮酷飒，姿势有活力姿势，画面生动人物鲜活，服装有设计感，画面有氛围ins热门图片，画面比例竖版3:4，正面照（坚决不要仰头+不要侧身），佳能相机他人拍摄，8k`
+    },
+    {
+        id: 'img8',
+        category: 'lifestyle',
+        title: '温馨居家卧室',
+        icon: '🛏️',
+        subtitle: '温馨卧室+晨光+私密感',
+        tags: ['居家', '温馨', '私密'],
+        content: `一个精致性感的年轻欧美白人美女模特，18岁，白人，眉眼魅惑，戴着图中假模头上的假发（渐变+挑染发色大波浪短发），100%还原假模头上假发，跟假模头上假发打理造型形态一样，头发非常浓密头发层次自然，戴上后美丽动人，发量多，风格新潮，年轻面容和善温柔。假发宣传拍摄，面部毛孔清晰，自然肌肤纹理，肤色白里透红，表现自信张扬。ins妆容，亮面唇釉（偏粉调），ins百万网红依靠美丽的图片吸引关注，她穿着紧身设计感风格衣服，画面高级大气。温馨居家卧室背景（柔软床铺+白色窗帘+晨光透入+简约家具），精致服饰场景的精致感契合，能突出发丝的"层次自然+轻欲质感"，凸显松弛感画面明亮有打光，单手叉腰，肢体摆动作自然松弛抓拍感，表情俏皮温柔，姿势有活力姿势，画面生动人物鲜活，服装有设计感，画面有氛围ins热门图片，画面比例竖版3:4，正面照（坚决不要仰头+不要侧身），佳能相机他人拍摄，8k`
+    },
+    {
+        id: 'img9',
+        category: 'street',
+        title: '巴黎街头艺术区',
+        icon: '🎨',
+        subtitle: '艺术墙绘+欧式建筑+文艺感',
+        tags: ['巴黎', '艺术', '文艺'],
+        content: `一个精致性感的年轻欧美白人美女模特，18岁，白人，眉眼魅惑，戴着图中假模头上的假发（渐变+挑染发色大波浪短发），100%还原假模头上假发，跟假模头上假发打理造型形态一样，头发非常浓密头发层次自然，戴上后美丽动人，发量多，风格新潮，年轻面容和善温柔。假发宣传拍摄，面部毛孔清晰，自然肌肤纹理，肤色白里透红，表现自信张扬。ins妆容，亮面唇釉（偏粉调），ins百万网红依靠美丽的图片吸引关注，她穿着紧身设计感风格衣服，画面高级大气。巴黎街头艺术区背景（彩色墙绘+欧式建筑+露天咖啡馆+艺术雕塑），精致服饰场景的精致感契合，能突出发丝的"层次自然+轻欲质感"，凸显松弛感画面明亮有打光，单手叉腰，肢体摆动作自然松弛抓拍感，表情俏皮艺术感，姿势有活力姿势，画面生动人物鲜活，服装有设计感，画面有氛围ins热门图片，画面比例竖版3:4，正面照（坚决不要仰头+不要侧身），佳能相机他人拍摄，8k`
+    },
+    {
+        id: 'img10',
+        category: 'nature',
+        title: '秋日落叶大道',
+        icon: '🍂',
+        subtitle: '金黄落叶+秋日阳光+浪漫',
+        tags: ['秋日', '落叶', '浪漫'],
+        content: `一个精致性感的年轻欧美白人美女模特，18岁，白人，眉眼魅惑，戴着图中假模头上的假发（渐变+挑染发色大波浪短发），100%还原假模头上假发，跟假模头上假发打理造型形态一样，头发非常浓密头发层次自然，戴上后美丽动人，发量多，风格新潮，年轻面容和善温柔。假发宣传拍摄，面部毛孔清晰，自然肌肤纹理，肤色白里透红，表现自信张扬。ins妆容，亮面唇釉（偏粉调），ins百万网红依靠美丽的图片吸引关注，她穿着紧身设计感风格衣服，画面高级大气。秋日落叶大道背景（金黄落叶铺满地面+秋日暖阳+两旁树木+浪漫氛围），精致服饰场景的精致感契合，能突出发丝的"层次自然+轻欲质感"，凸显松弛感画面明亮有打光，单手叉腰，肢体摆动作自然松弛抓拍感，表情俏皮温暖，姿势有活力姿势，画面生动人物鲜活，服装有设计感，画面有氛围ins热门图片，画面比例竖版3:4，正面照（坚决不要仰头+不要侧身），佳能相机他人拍摄，8k`
+    },
+    {
+        id: 'img11',
+        category: 'fashion',
+        title: '豪华酒店大堂',
+        icon: '🏨',
+        subtitle: '豪华酒店+水晶吊灯+奢华感',
+        tags: ['酒店', '奢华', '高端'],
+        content: `一个精致性感的年轻欧美白人美女模特，18岁，白人，眉眼魅惑，戴着图中假模头上的假发（渐变+挑染发色大波浪短发），100%还原假模头上假发，跟假模头上假发打理造型形态一样，头发非常浓密头发层次自然，戴上后美丽动人，发量多，风格新潮，年轻面容和善温柔。假发宣传拍摄，面部毛孔清晰，自然肌肤纹理，肤色白里透红，表现自信张扬。ins妆容，亮面唇釉（偏粉调），ins百万网红依靠美丽的图片吸引关注，她穿着紧身设计感风格衣服，画面高级大气。豪华酒店大堂背景（水晶吊灯+大理石地面+豪华装饰+落地窗），精致服饰场景的精致感契合，能突出发丝的"层次自然+轻欲质感"，凸显松弛感画面明亮有打光，单手叉腰，肢体摆动作自然松弛抓拍感，表情俏皮高贵，姿势有活力姿势，画面生动人物鲜活，服装有设计感，画面有氛围ins热门图片，画面比例竖版3:4，正面照（坚决不要仰头+不要侧身），佳能相机他人拍摄，8k`
+    },
+    {
+        id: 'img12',
+        category: 'lifestyle',
+        title: '精致化妆间',
+        icon: '💄',
+        subtitle: '化妆间+镜子+灯泡环绕',
+        tags: ['化妆间', '镜子', '精致'],
+        content: `一个精致性感的年轻欧美白人美女模特，18岁，白人，眉眼魅惑，戴着图中假模头上的假发（渐变+挑染发色大波浪短发），100%还原假模头上假发，跟假模头上假发打理造型形态一样，头发非常浓密头发层次自然，戴上后美丽动人，发量多，风格新潮，年轻面容和善温柔。假发宣传拍摄，面部毛孔清晰，自然肌肤纹理，肤色白里透红，表现自信张扬。ins妆容，亮面唇釉（偏粉调），ins百万网红依靠美丽的图片吸引关注，她穿着紧身设计感风格衣服，画面高级大气。精致化妆间背景（带灯泡的化妆镜+化妆台+化妆品+柔和灯光），精致服饰场景的精致感契合，能突出发丝的"层次自然+轻欲质感"，凸显松弛感画面明亮有打光，单手叉腰，肢体摆动作自然松弛抓拍感，表情俏皮精致感，姿势有活力姿势，画面生动人物鲜活，服装有设计感，画面有氛围ins热门图片，画面比例竖版3:4，正面照（坚决不要仰头+不要侧身），佳能相机他人拍摄，8k`
+    },
+    {
+        id: 'img13',
+        category: 'street',
+        title: '伦敦红色电话亭',
+        icon: '☎️',
+        subtitle: '红色电话亭+英伦街道+复古',
+        tags: ['伦敦', '英伦', '复古'],
+        content: `一个精致性感的年轻欧美白人美女模特，18岁，白人，眉眼魅惑，戴着图中假模头上的假发（渐变+挑染发色大波浪短发），100%还原假模头上假发，跟假模头上假发打理造型形态一样，头发非常浓密头发层次自然，戴上后美丽动人，发量多，风格新潮，年轻面容和善温柔。假发宣传拍摄，面部毛孔清晰，自然肌肤纹理，肤色白里透红，表现自信张扬。ins妆容，亮面唇釉（偏粉调），ins百万网红依靠美丽的图片吸引关注，她穿着紧身设计感风格衣服，画面高级大气。伦敦街头背景（红色电话亭+英伦建筑+双层巴士+石板路），精致服饰场景的精致感契合，能突出发丝的"层次自然+轻欲质感"，凸显松弛感画面明亮有打光，单手叉腰，肢体摆动作自然松弛抓拍感，表情俏皮英伦范，姿势有活力姿势，画面生动人物鲜活，服装有设计感，画面有氛围ins热门图片，画面比例竖版3:4，正面照（坚决不要仰头+不要侧身），佳能相机他人拍摄，8k`
+    },
+    {
+        id: 'img14',
+        category: 'nature',
+        title: '森林阳光穿透',
+        icon: '🌲',
+        subtitle: '森林+阳光穿透+自然光',
+        tags: ['森林', '阳光', '自然'],
+        content: `一个精致性感的年轻欧美白人美女模特，18岁，白人，眉眼魅惑，戴着图中假模头上的假发（渐变+挑染发色大波浪短发），100%还原假模头上假发，跟假模头上假发打理造型形态一样，头发非常浓密头发层次自然，戴上后美丽动人，发量多，风格新潮，年轻面容和善温柔。假发宣传拍摄，面部毛孔清晰，自然肌肤纹理，肤色白里透红，表现自信张扬。ins妆容，亮面唇釉（偏粉调），ins百万网红依靠美丽的图片吸引关注，她穿着紧身设计感风格衣服，画面高级大气。森林背景（高大树木+阳光穿透树叶+斑驳光影+绿色植被），精致服饰场景的精致感契合，能突出发丝的"层次自然+轻欲质感"，凸显松弛感画面明亮有打光，单手叉腰，肢体摆动作自然松弛抓拍感，表情俏皮自然感，姿势有活力姿势，画面生动人物鲜活，服装有设计感，画面有氛围ins热门图片，画面比例竖版3:4，正面照（坚决不要仰头+不要侧身），佳能相机他人拍摄，8k`
+    },
+    {
+        id: 'img15',
+        category: 'night',
+        title: '屋顶夜景派对',
+        icon: '🌌',
+        subtitle: '屋顶露台+城市夜景+星空',
+        tags: ['屋顶', '夜景', '派对'],
+        content: `一个精致性感的年轻欧美白人美女模特，18岁，白人，眉眼魅惑，戴着图中假模头上的假发（渐变+挑染发色大波浪短发），100%还原假模头上假发，跟假模头上假发打理造型形态一样，头发非常浓密头发层次自然，戴上后美丽动人，发量多，风格新潮，年轻面容和善温柔。假发宣传拍摄，面部毛孔清晰，自然肌肤纹理，肤色白里透红，表现自信张扬。ins妆容，亮面唇釉（偏粉调），ins百万网红依靠美丽的图片吸引关注，她穿着紧身设计感风格衣服，画面高级大气。屋顶露台夜景背景（城市夜景灯光+星空+户外沙发+氛围灯串），精致服饰场景的精致感契合，能突出发丝的"层次自然+轻欲质感"，凸显松弛感画面有氛围打光，单手叉腰，肢体摆动作自然松弛抓拍感，表情俏皮派对感，姿势有活力姿势，画面生动人物鲜活，服装有设计感，画面有氛围ins热门图片，画面比例竖版3:4，正面照（坚决不要仰头+不要侧身），佳能相机他人拍摄，8k`
+    },
+    {
+        id: 'img16',
+        category: 'cafe',
+        title: '户外露台brunch',
+        icon: '🥐',
+        subtitle: '户外露台+brunch+阳光',
+        tags: ['露台', 'brunch', '阳光'],
+        content: `一个精致性感的年轻欧美白人美女模特，18岁，白人，眉眼魅惑，戴着图中假模头上的假发（渐变+挑染发色大波浪短发），100%还原假模头上假发，跟假模头上假发打理造型形态一样，头发非常浓密头发层次自然，戴上后美丽动人，发量多，风格新潮，年轻面容和善温柔。假发宣传拍摄，面部毛孔清晰，自然肌肤纹理，肤色白里透红，表现自信张扬。ins妆容，亮面唇釉（偏粉调），ins百万网红依靠美丽的图片吸引关注，她穿着紧身设计感风格衣服，画面高级大气。户外露台brunch背景（户外座位+精美食物+绿植装饰+明媚阳光），精致服饰场景的精致感契合，能突出发丝的"层次自然+轻欲质感"，凸显松弛感画面明亮有打光，单手叉腰，肢体摆动作自然松弛抓拍感，表情俏皮享受感，姿势有活力姿势，画面生动人物鲜活，服装有设计感，画面有氛围ins热门图片，画面比例竖版3:4，正面照（坚决不要仰头+不要侧身），佳能相机他人拍摄，8k`
+    },
+    {
+        id: 'img17',
+        category: 'fashion',
+        title: '设计师工作室',
+        icon: '🧵',
+        subtitle: '设计师工作室+布料+创意感',
+        tags: ['工作室', '设计', '创意'],
+        content: `一个精致性感的年轻欧美白人美女模特，18岁，白人，眉眼魅惑，戴着图中假模头上的假发（渐变+挑染发色大波浪短发），100%还原假模头上假发，跟假模头上假发打理造型形态一样，头发非常浓密头发层次自然，戴上后美丽动人，发量多，风格新潮，年轻面容和善温柔。假发宣传拍摄，面部毛孔清晰，自然肌肤纹理，肤色白里透红，表现自信张扬。ins妆容，亮面唇釉（偏粉调），ins百万网红依靠美丽的图片吸引关注，她穿着紧身设计感风格衣服，画面高级大气。设计师工作室背景（布料架+缝纫机+设计稿+工业风装修），精致服饰场景的精致感契合，能突出发丝的"层次自然+轻欲质感"，凸显松弛感画面明亮有打光，单手叉腰，肢体摆动作自然松弛抓拍感，表情俏皮创意感，姿势有活力姿势，画面生动人物鲜活，服装有设计感，画面有氛围ins热门图片，画面比例竖版3:4，正面照（坚决不要仰头+不要侧身），佳能相机他人拍摄，8k`
+    },
+    {
+        id: 'img18',
+        category: 'lifestyle',
+        title: '书店文艺角落',
+        icon: '📚',
+        subtitle: '书店+书架+文艺氛围',
+        tags: ['书店', '文艺', '知性'],
+        content: `一个精致性感的年轻欧美白人美女模特，18岁，白人，眉眼魅惑，戴着图中假模头上的假发（渐变+挑染发色大波浪短发），100%还原假模头上假发，跟假模头上假发打理造型形态一样，头发非常浓密头发层次自然，戴上后美丽动人，发量多，风格新潮，年轻面容和善温柔。假发宣传拍摄，面部毛孔清晰，自然肌肤纹理，肤色白里透红，表现自信张扬。ins妆容，亮面唇釉（偏粉调），ins百万网红依靠美丽的图片吸引关注，她穿着紧身设计感风格衣服，画面高级大气。书店背景（高大书架+木质楼梯+阅读角落+温暖灯光），精致服饰场景的精致感契合，能突出发丝的"层次自然+轻欲质感"，凸显松弛感画面明亮有打光，单手叉腰，肢体摆动作自然松弛抓拍感，表情俏皮知性感，姿势有活力姿势，画面生动人物鲜活，服装有设计感，画面有氛围ins热门图片，画面比例竖版3:4，正面照（坚决不要仰头+不要侧身），佳能相机他人拍摄，8k`
+    },
+    {
+        id: 'img19',
+        category: 'night',
+        title: '电影院门口',
+        icon: '🎬',
+        subtitle: '电影院+霓虹灯牌+夜晚',
+        tags: ['电影院', '夜晚', '约会'],
+        content: `一个精致性感的年轻欧美白人美女模特，18岁，白人，眉眼魅惑，戴着图中假模头上的假发（渐变+挑染发色大波浪短发），100%还原假模头上假发，跟假模头上假发打理造型形态一样，头发非常浓密头发层次自然，戴上后美丽动人，发量多，风格新潮，年轻面容和善温柔。假发宣传拍摄，面部毛孔清晰，自然肌肤纹理，肤色白里透红，表现自信张扬。ins妆容，亮面唇釉（偏粉调），ins百万网红依靠美丽的图片吸引关注，她穿着紧身设计感风格衣服，画面高级大气。电影院门口背景（霓虹灯牌+电影海报+夜晚街道+人群），精致服饰场景的精致感契合，能突出发丝的"层次自然+轻欲质感"，凸显松弛感画面有氛围打光，单手叉腰，肢体摆动作自然松弛抓拍感，表情俏皮约会感，姿势有活力姿势，画面生动人物鲜活，服装有设计感，画面有氛围ins热门图片，画面比例竖版3:4，正面照（坚决不要仰头+不要侧身），佳能相机他人拍摄，8k`
+    },
+    {
+        id: 'img20',
+        category: 'street',
+        title: '东京涩谷街头',
+        icon: '🇯🇵',
+        subtitle: '涩谷十字路口+霓虹+潮流',
+        tags: ['东京', '涩谷', '潮流'],
+        content: `一个精致性感的年轻欧美白人美女模特，18岁，白人，眉眼魅惑，戴着图中假模头上的假发（渐变+挑染发色大波浪短发），100%还原假模头上假发，跟假模头上假发打理造型形态一样，头发非常浓密头发层次自然，戴上后美丽动人，发量多，风格新潮，年轻面容和善温柔。假发宣传拍摄，面部毛孔清晰，自然肌肤纹理，肤色白里透红，表现自信张扬。ins妆容，亮面唇釉（偏粉调），ins百万网红依靠美丽的图片吸引关注，她穿着紧身设计感风格衣服，画面高级大气。东京涩谷街头背景（繁忙十字路口+霓虹灯牌+潮流人群+电子屏幕），精致服饰场景的精致感契合，能突出发丝的"层次自然+轻欲质感"，凸显松弛感画面明亮有打光，单手叉腰，肢体摆动作自然松弛抓拍感，表情俏皮潮流感，姿势有活力姿势，画面生动人物鲜活，服装有设计感，画面有氛围ins热门图片，画面比例竖版3:4，正面照（坚决不要仰头+不要侧身），佳能相机他人拍摄，8k`
+    }
+];
+
+// ========== 渲染AI生图提示词 ==========
+function renderImagePrompts(filter = 'all') {
+    const container = document.getElementById('image-prompts-container');
+    const filtered = filter === 'all' ? imagePromptsData : imagePromptsData.filter(p => p.category === filter);
+    
+    container.innerHTML = filtered.map(item => `
+        <div class="card" style="padding: 24px; margin-bottom: 20px; border: 1px solid #334155; border-radius: 12px; background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);">
+            <div style="display: flex; align-items: flex-start; gap: 16px; margin-bottom: 16px; flex-wrap: wrap;">
+                <div style="font-size: 40px; line-height: 1;">${item.icon}</div>
+                <div style="flex: 1; min-width: 200px;">
+                    <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 8px;">
+                        <h3 style="font-size: 18px; font-weight: 700; color: #e2e8f0;">${item.title}</h3>
+                        <span class="tag" style="background: #1e3a5f; color: #7dd3fc; border: 1px solid #3b82f6; padding: 2px 10px; border-radius: 4px; font-size: 12px;">${getImageCategoryName(item.category)}</span>
+                    </div>
+                    <p style="color: #64748b; font-size: 13px; margin-bottom: 12px;">${item.subtitle}</p>
+                    <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+                        ${item.tags.map(tag => `<span class="tag" style="background: rgba(56, 189, 248, 0.1); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.3); padding: 2px 10px; border-radius: 4px; font-size: 12px;">${tag}</span>`).join('')}
+                    </div>
+                </div>
+                <button class="copy-btn" onclick="copyImagePrompt('${item.id}')" style="background: linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%); border: none; padding: 10px 24px; border-radius: 8px; font-size: 13px; color: white; cursor: pointer;">
+                    📋 复制提示词
+                </button>
+            </div>
+            <div style="background: #0f172a; border: 1px solid #334155; border-radius: 8px; padding: 16px; font-family: 'Courier New', monospace; font-size: 13px; line-height: 1.8; color: #cbd5e1; max-height: 300px; overflow-y: auto;" id="imgprompt-${item.id}">
+                ${item.content}
+            </div>
+        </div>
+    `).join('');
+}
+
+// 获取分类名称
+function getImageCategoryName(category) {
+    const names = {
+        'cafe': '咖啡休闲',
+        'street': '都市街头',
+        'nature': '自然户外',
+        'fashion': '时尚室内',
+        'night': '夜景氛围',
+        'lifestyle': '生活场景'
+    };
+    return names[category] || category;
+}
+
+// 复制AI生图提示词
+function copyImagePrompt(id) {
+    const el = document.getElementById(`imgprompt-${id}`);
+    if (!el) return;
+    const text = el.innerText;
+    navigator.clipboard.writeText(text).then(() => {
+        const btn = event.target;
+        const orig = btn.innerHTML;
+        btn.innerHTML = '✓ 已复制';
+        btn.style.background = 'linear-gradient(135deg, #10b981 0%, #059669 100%)';
+        setTimeout(() => { 
+            btn.innerHTML = orig; 
+            btn.style.background = ''; 
+        }, 1500);
+    });
+}
+
+// 筛选AI生图提示词
+function filterImagePrompts(category) {
+    document.querySelectorAll('#tab-imageprompts .filter-btn').forEach(btn => btn.classList.remove('active'));
+    event.target.classList.add('active');
+    renderImagePrompts(category);
+}
+
+// ========== 创意提示词数据 ==========
+const creativeData = [
+    // 变身转场类
+    {
+        id: 'c1',
+        category: 'transform',
+        title: '假模转真人 · 响指转场',
+        subtitle: '假发杆模特 → 真实模特，经典分身转场',
+        tags: ['分身转场', '响指', '变身'],
+        content: `【转化为你变成美丽的欧美美女模特佩戴这顶假发】
+
+00:00-00:02【起势:假模打响指】
+画面：假模半身近景，抬手到胸前轻打响指
+转场：响指瞬间轻微闪白+轻微模糊
+镜头语言：定格→微动→触发转场
+作用：用"动作"硬衔接假模→真人，最自然
+
+00:02-00:05【真人出场:推镜】
+画面：真人同位置、同姿势出现，假发完整呈现
+镜头：轻微向前推进(慢推)
+动作：模特轻轻抬下巴，眼神看向镜头
+推镜=自然入场，不用硬切
+
+00:05-00:08【侧面展示:横移】
+画面：模特缓慢转向45°侧颜
+镜头：小幅水平横移+轻微环绕
+重点：展示假发侧边轮廓、蓬松度、发际线
+人在动，镜头也在动，完全不生硬
+
+00:08-00:12【背面/整体:慢环绕】
+画面：模特轻转身，展示背面与整体发量
+镜头：低幅度环绕镜头
+动作：手轻轻拨一下发尾
+环绕是广告最丝滑的转场方式，没有之一
+
+00:12-00:15【收尾:拉镜定格】
+画面：模特转回正面，微笑看镜头
+镜头：缓慢向后微拉，聚焦整体假发质感
+结尾：轻微柔光收尾
+拉镜=自然收束，高级感拉满
+
+全片：半身展示，中近景为主
+语言：全英文旁白或无台词
+风格：高端广告感`
+    },
+    {
+        id: 'c2',
+        category: 'transform',
+        title: '素颜到精致 · 化妆转场',
+        subtitle: '素颜模特 → 佩戴假发精致妆容',
+        tags: ['化妆', '变身', '精致'],
+        content: `【转化为你变成美丽的欧美美女模特佩戴这顶假发】
+
+00:00-00:03【素颜出场】
+画面：素颜模特半近景，坐在梳妆台前
+镜头：固定中景，自然光
+动作：手托腮，眼神略显疲惫
+风格：真实感，无滤镜
+
+00:03-00:05【手势转场】
+动作：模特用手轻轻抚摸脸部
+转场：手指滑过处画面轻微虚化
+作用：暗示即将"变脸"
+
+00:05-00:08【假发佩戴过程】
+画面：手拿假发，缓缓戴上
+镜头：特写手部动作+镜中反射
+动作：优雅从容，仿佛施魔法
+转场：镜中倒影逐渐清晰
+
+00:08-00:12【精致转身】
+画面：模特转身面向镜头，已佩戴完整假发+精致妆容
+镜头：缓慢推进到中近景
+灯光：从自然光切换到轮廓光
+动作：轻轻甩头，发丝飘动
+表情：自信微笑，眼神发光
+
+00:12-00:15【多角度展示】
+画面：正面→侧面→45度→背面
+镜头：环绕过渡，每个角度定格1秒
+重点：展示假发完整造型和发际线细节
+
+00:15-00:18【收尾定格】
+画面：正面微笑，眼神电力十足
+镜头：缓慢拉远，轻微柔光
+结尾：淡出
+
+全片：半身为主，展示假发佩戴前后的巨大对比
+风格：精致广告感，INS风格`
+    },
+    {
+        id: 'c3',
+        category: 'transform',
+        title: '脱下假发 · 惊喜反转让',
+        subtitle: '精致假发 → 摘下展示真实感',
+        tags: ['反转', '真实', '惊喜'],
+        content: `【转化为你变成美丽的欧美美女模特佩戴这顶假发】
+
+00:00-00:05【精致开场】
+画面：模特佩戴假发，完美造型，近景怼脸拍
+镜头：固定特写，电影感灯光
+动作：自信拨头发，眼神勾人
+风格：完美无瑕的广告片
+
+00:05-00:08【意外一刻】
+动作：模特突然轻轻抓住假发边缘
+表情：俏皮一笑，眼神示意"等一下"
+转场：快速轻微闪白
+
+00:08-00:12【惊喜反转让】
+画面：假发被摘下，真人模特出现（可能是不同造型或无假发）
+镜头：特写快速切换，展示反差
+动作：摘下假发后自信甩头
+表情：自信笑容，仿佛说"我本来就这么美"
+
+00:12-00:15【对比展示】
+画面：假发拿在手中 vs 真实头发
+镜头：左右分屏对比
+旁白：可加文字"Real hair or wig? Both stunning!"
+目的：展示产品真实感，同时增加话题性
+
+00:15-00:18【再次佩戴】
+动作：再次戴上假发，回归完美造型
+镜头：向后拉远到半身
+结尾：定点pose
+
+全片：利用反差制造话题和惊喜感
+风格：轻松俏皮，带点幽默`
+    },
+    
+    // 产品展示类
+    {
+        id: 'c4',
+        category: 'showcase',
+        title: '发丝飘动 · 慢动作特写',
+        subtitle: '全方面展示假发飘逸感',
+        tags: ['慢动作', '特写', '飘逸'],
+        content: `【转化为你变成美丽的欧美美女模特佩戴这顶假发】
+
+00:00-00:03【正面近景】
+画面：模特正脸近景，慢动作
+动作：轻轻甩头，发丝从一侧飘到另一侧
+镜头：固定+轻微推近
+灯光：侧逆光，轮廓光勾勒发丝边缘
+
+00:03-00:07【侧面特写】
+画面：模特45度侧脸，慢动作
+动作：手指轻抚发丝，从头顶滑到发尾
+镜头：特写聚焦发丝
+重点：展示发丝顺滑度和光泽
+
+00:07-00:10【背面全景】
+画面：模特转身背对镜头，长发飘飘
+动作：转身时发丝自然飞扬
+镜头：跟随旋转，轻微环绕
+氛围：展示发量和蓬松度
+
+00:10-00:14【细节特写】
+画面：超近景特写，发丝细节
+动作：手指穿插在发丝中，展示柔顺
+镜头：微距感
+重点：展示真人发质感，无塑料感
+
+00:14-00:18【最终正面】
+画面：模特正面，半身
+动作：自信微笑，轻拨刘海
+镜头：缓慢拉远
+结尾：定点，柔光收尾
+
+全片：全部慢动作，强调假发的高品质质感
+风格：高端广告电影感`
+    },
+    {
+        id: 'c5',
+        category: 'showcase',
+        title: '多造型切换 · 一假多用',
+        subtitle: '展示假发的多种造型可能性',
+        tags: ['多造型', '变化', '实用'],
+        content: `【转化为你变成美丽的欧美美女模特佩戴这顶假发】
+
+00:00-00:04【造型1:大波浪】
+画面：模特半身，近景
+动作：拨弄大波浪卷发，自信展示
+镜头：固定，缓慢推进
+造型：自然大波浪，成熟女神范
+
+转场：快速轻微闪白
+
+00:04-00:08【造型2:高马尾】
+画面：同位置，造型变换
+动作：手扎马尾，活力一甩
+镜头：跟随动作推进
+造型：高马尾，干练运动风
+
+转场：旋转过渡
+
+00:08-00:12【造型3:侧边编发】
+画面：同位置
+动作：侧边编发，手指灵活操作
+镜头：特写手部动作
+造型：精致编发，优雅淑女
+
+转场：快速模糊
+
+00:12-00:16【造型4:披肩直发】
+画面：放下所有造型
+动作：轻轻甩头，变回自然披肩
+镜头：环绕展示
+造型：简约自然，百搭风格
+
+00:16-00:20【总结亮相】
+画面：最终造型（任选最惊艳的）
+动作：自信定屏，眼神勾人
+镜头：拉远到半身
+结尾：淡出
+
+全片：展示假发的多样性和实用性
+风格：快速剪辑，节奏感强`
+    },
+    {
+        id: 'c6',
+        category: 'showcase',
+        title: '发际线特写 · 隐形效果',
+        subtitle: '展示蕾丝发际线的逼真效果',
+        tags: ['发际线', '特写', '隐形'],
+        content: `【转化为你变成美丽的欧美美女模特佩戴这顶假发】
+
+00:00-00:04【发际线全景】
+画面：模特侧脸，展示整体造型
+动作：侧头，展示侧边发际线
+镜头：侧光强调轮廓
+重点：展示发际线与皮肤的完美融合
+
+00:04-00:08【发际线特写】
+画面：超近景聚焦发际线区域
+动作：手指轻抚发际线边缘
+镜头：特写固定
+展示：HD蕾丝透明度，手工打结细节
+
+00:04-00:12【多种角度】
+画面：正面→侧面→45度→背面
+动作：缓慢转头，每个角度定格
+镜头：平移过渡
+重点：每个角度都看不到发际线痕迹
+
+00:12-00:16【对比测试】
+画面：手指按压发际线区域
+动作：轻按，展示弹性
+镜头：特写
+展示：假发与头皮的贴合度
+
+00:16-00:20【最终展示】
+画面：正面微笑，自然光线
+动作：自信拨刘海，无任何遮挡
+镜头：拉远
+结尾：定点，自然淡出
+
+全片：专注展示发际线隐形效果
+风格：专业测评感，高端广告`
+    },
+    
+    // 生活方式类
+    {
+        id: 'c7',
+        category: 'lifestyle',
+        title: '晨间咖啡 · 慵懒日常',
+        subtitle: '假发融入日常生活的真实感',
+        tags: ['日常', '慵懒', '生活'],
+        content: `【转化为你变成美丽的欧美美女模特佩戴这顶假发】
+
+00:00-00:04【清晨醒来】
+画面：模特侧卧，床上，晨光透过窗帘
+镜头：特写侧脸，发丝自然散落
+动作：慢慢睁开眼睛，慵懒微笑
+氛围：自然真实，无精致妆容
+
+00:04-00:08【走向咖啡机】
+画面：起床走向厨房，脚步声
+镜头：跟随拍摄，中景
+动作：伸懒腰，假发自然状态
+重点：展示假发的自然日常感
+
+00:08-00:12【咖啡时光】
+画面：站在咖啡机前，手拿咖啡
+镜头：近景，侧光
+动作：轻啜咖啡，手指拨弄发丝
+氛围：放松惬意
+
+00:12-00:16【阳光窗边】
+画面：走到窗边，背对阳光
+动作：转身面向镜头，拨头发
+镜头：逆光拍摄，轮廓发光
+氛围：温暖舒适
+
+00:16-00:20【最终定格】
+画面：端咖啡微笑，自然状态
+镜头：缓慢推近到半身
+结尾：自然淡出
+
+全片：展示假发在日常生活中自然美观
+风格：vlog感，真实不做作`
+    },
+    {
+        id: 'c8',
+        category: 'lifestyle',
+        title: '健身房活力 · 牢固展示',
+        subtitle: '运动中展示假发的牢固度',
+        tags: ['运动', '活力', '牢固'],
+        content: `【转化为你变成美丽的欧美美女模特佩戴这顶假发】
+
+00:00-00:04【健身房环境】
+画面：健身房环境，器械区
+镜头：横移展示环境
+动作：走入画面，充满活力
+
+00:04-00:08【运动准备】
+画面：扎马尾假发，对镜整理
+镜头：近景
+动作：用手梳理发型，检查牢固度
+
+00:08-00:12【开始运动】
+画面：跑步机跑步
+镜头：侧面跟随
+动作：马尾自然摆动，展示牢固
+重点：剧烈运动中假发不移位
+
+00:12-00:16【瑜伽时刻】
+画面：瑜伽垫上，舒展动作
+镜头：正面固定
+动作：各种体式，头部动作
+重点：大幅度运动中假发依然服帖
+
+00:16-00:20【运动后定格】
+画面：擦汗，整理发型
+镜头：特写
+动作：手指穿过假发，依然顺滑
+结尾：自信微笑，柔光收尾
+
+全片：展示假发在运动中的牢固度
+风格：运动品牌联名感，充满活力`
+    },
+    {
+        id: 'c9',
+        category: 'lifestyle',
+        title: '海边度假 · 氛围感',
+        subtitle: '假发在海风中的飘逸感',
+        tags: ['海边', '度假', '氛围'],
+        content: `【转化为你变成美丽的欧美美女模特佩戴这顶假发】
+
+00:00-00:04【沙滩漫步】
+画面：海边沙滩，长发飘逸
+镜头：跟随拍摄
+动作：漫步走，发丝随风飘动
+氛围：阳光沙滩，度假感
+
+00:04-00:08【海风吹拂】
+画面：站在海边，面对镜头
+动作：拨弄被风吹乱的头发
+镜头：特写
+重点：海风中的自然感，不凌乱
+
+00:08-00:12【海浪边缘】
+画面：脚踩海水，侧身站立
+动作：弯腰捡贝壳，长发垂落
+镜头：低角度
+氛围：轻松惬意
+
+00:12-00:16【逆光剪影】
+画面：背对太阳，走向镜头
+动作：转身，发丝飞起
+镜头：逆光拍摄，剪影效果
+氛围：浪漫电影感
+
+00:16-00:20【最终定格】
+画面：侧面站立，海风吹拂
+动作：拨头发，微笑
+镜头：拉远
+结尾：淡出
+
+全片：展示假发在自然环境中的美观
+风格：度假广告感，浪漫唯美`
+    },
+    
+    // 情绪表达类
+    {
+        id: 'c10',
+        category: 'emotion',
+        title: '自信眼神 · 拽姐登场',
+        subtitle: '高冷御姐风格，眼神杀',
+        tags: ['高冷', '自信', '御姐'],
+        content: `【转化为你变成美丽的欧美美女模特佩戴这顶假发】
+
+00:00-00:04【神秘开场】
+画面：侧面特写，半身
+动作：侧头，眼神不看镜头
+镜头：固定，慢推
+氛围：高冷神秘
+
+00:04-00:08【眼神杀】
+画面：慢慢转向镜头，正脸
+动作：眼神直接看进镜头，坚定冷峻
+镜头：特写推进
+表情：无笑容，只有自信
+
+00:08-00:12【轻蔑微笑】
+画面：微微挑眉，轻蔑一笑
+动作：手指轻抚发丝
+镜头：特写
+氛围：拽姐本拽
+
+00:12-00:16【转身离去】
+画面：转身背对镜头
+动作：拨头发，大步离开
+镜头：跟随拍摄
+氛围：留下传说
+
+00:16-00:20【最终回眸】
+画面：突然回头，眼神杀
+镜头：特写
+结尾：定格，淡出
+
+全片：强调自信和高冷气质
+风格：高端时尚杂志感`
+    },
+    {
+        id: 'c11',
+        category: 'emotion',
+        title: '甜美微笑 · 邻家女孩',
+        subtitle: '亲切甜美，让人心动',
+        tags: ['甜美', '可爱', '亲切'],
+        content: `【转化为你变成美丽的欧美美女模特佩戴这顶假发】
+
+00:00-00:04【温柔出场】
+画面：正面近景，自然光
+动作：轻轻拨开眼前碎发
+镜头：缓慢推进
+表情：甜美微笑，眼神温柔
+
+00:04-00:08【歪头杀】
+画面：微微歪头
+动作：歪头杀，手指轻点脸颊
+镜头：特写
+表情：少女感，俏皮可爱
+
+00:08-00:12【拨发诱惑】
+画面：侧脸展示
+动作：手指穿过发丝，轻轻拨到耳后
+镜头：特写
+氛围：温柔似水
+
+00:12-00:16【害羞低头】
+画面：低头浅笑
+动作：低头，手指卷发
+镜头：俯拍
+表情：羞涩甜美
+
+00:16-00:20【最终定格】
+画面：抬头，灿烂微笑
+镜头：拉远到半身
+结尾：wink一下，淡出
+
+全片：强调甜美可爱的邻家女孩感
+风格：清新日系感`
+    },
+    {
+        id: 'c12',
+        category: 'emotion',
+        title: '女王登场 · 气场全开',
+        subtitle: '霸气女王，碾压全场',
+        tags: ['女王', '霸气', '气场'],
+        content: `【转化为你变成美丽的欧美美女模特佩戴这顶假发】
+
+00:00-00:04【背影出场】
+画面：背面全身，远景
+动作：缓慢走近，气场全开
+镜头：固定，跟随
+氛围：女王驾到
+
+00:04-00:08【侧颜杀】
+画面：侧脸特写，高冷
+动作：微微侧头，下巴轻抬
+镜头：特写推进
+表情：居高临下
+
+00:08-00:12【正脸审视】
+画面：正脸看镜头
+动作：眼神审视，仿佛在评估
+镜头：固定特写
+氛围：全场焦点
+
+00:12-00:16【转身】
+画面：转身，长发甩动
+动作：霸气转身，大步走
+镜头：跟随，环绕
+氛围：女王气场
+
+00:16-00:20【最终定】
+画面：侧身站立
+动作：手叉腰，眼神看远方
+镜头：拉远
+结尾：定格，淡出
+
+全片：强调女王气场和霸气
+风格：奢侈品牌广告感`
+    },
+    {
+        id: 'c13',
+        category: 'emotion',
+        title: '优雅转身 · 法式优雅',
+        subtitle: '法式优雅，精致生活',
+        tags: ['优雅', '法式', '精致'],
+        content: `【转化为你变成美丽的欧美美女模特佩戴这顶假发】
+
+00:00-00:04【侧身站立】
+画面：侧面半身，自然光
+动作：手拿咖啡，侧身站立
+镜头：固定
+氛围：法式优雅
+
+00:04-00:08【转身展示】
+画面：慢慢转身正面
+动作：轻轻转身，手自然摆放
+镜头：缓慢推进
+展示：假发完整造型
+
+00:08-00:12【手指轻点】
+画面：近景特写
+动作：手指轻点嘴唇或耳环
+镜头：特写固定
+氛围：精致优雅
+
+00:12-00:16【拨发】
+画面：侧面
+动作：轻轻拨弄发丝
+镜头：特写
+展示：发丝质感
+
+00:16-00:20【最终微笑】
+画面：正面微笑
+镜头：拉远到半身
+结尾：优雅点头，淡出
+
+全片：法式优雅风格
+风格：奢侈品广告感`
+    },
+    
+    // ========== 新增20个创意分身模板 ==========
+    
+    // 变身转场类（新增4个）
+    {
+        id: 'c14',
+        category: 'transform',
+        title: '镜子穿越 · 虚实转场',
+        subtitle: '镜中假模 → 镜外真人，穿越感转场',
+        tags: ['镜子', '穿越', '虚实'],
+        content: `【转化为你变成美丽的欧美美女模特佩戴这顶假发】
+
+00:00-00:03【镜中假模】
+画面：假模站在镜子前，镜中倒影清晰可见
+镜头：固定中景，对称构图
+动作：假模轻触镜面，眼神看向镜中自己
+氛围：神秘梦幻
+
+00:03-00:06【镜面涟漪】
+画面：镜面出现水波纹效果，仿佛水面
+转场：涟漪扩散，画面轻微扭曲
+音效：水滴声+空灵音效
+作用：制造穿越感
+
+00:06-00:10【真人穿越】
+画面：真人模特从镜中"走出"，与假模位置重合
+镜头：跟随拍摄，轻微推进
+动作：模特抬手触碰镜面，然后转身面向镜头
+效果：虚实交错的魔幻感
+
+00:10-00:14【现实确认】
+画面：模特离开镜子，在真实空间中展示假发
+镜头：环绕拍摄
+动作：甩头、拨发，展示假发自然状态
+氛围：从魔幻回归现实
+
+00:14-00:18【镜中回望】
+画面：模特回头望向镜子，镜中已无假模
+镜头：正反打切换
+寓意：假模已完成使命，真人接棒
+
+00:18-00:22【最终定格】
+画面：正面半身，自信微笑
+镜头：缓慢拉远
+结尾：柔光淡出
+
+全片：魔幻现实主义风格
+风格：高端艺术广告感`
+    },
+    {
+        id: 'c15',
+        category: 'transform',
+        title: '时间倒流 · 逆龄变身',
+        subtitle: '成熟造型 → 年轻造型，逆龄魔法',
+        tags: ['逆龄', '时间', '魔法'],
+        content: `【转化为你变成美丽的欧美美女模特佩戴这顶假发】
+
+00:00-00:04【成熟开场】
+画面：模特佩戴成熟风格假发（如盘发/短发）
+镜头：固定特写，冷色调灯光
+动作：优雅但略显严肃的表情
+氛围：成熟稳重
+
+00:04-00:07【时间特效】
+画面：画面出现时钟指针倒转特效
+转场：画面快速闪回，颜色从冷变暖
+音效：时钟滴答声倒放
+作用：暗示时间倒流
+
+00:07-00:11【年轻变身】
+画面：假发瞬间变换为年轻活泼造型（如长卷发/高马尾）
+镜头：快速推进到正面
+动作：模特惊喜表情，活力满满
+氛围：青春洋溢
+
+00:11-00:15【活力展示】
+画面：模特跳跃、旋转，展示年轻假发造型
+镜头：手持跟拍，捕捉动态
+动作：大笑、甩头、比耶
+氛围：年轻10岁的感觉
+
+00:15-00:19【对比定格】
+画面：分屏展示成熟vs年轻造型
+镜头：固定分屏
+文字："同一顶假发，不同造型，不同心情"
+
+00:19-00:23【最终选择】
+画面：模特选择年轻造型，自信微笑
+镜头：缓慢拉远
+结尾：阳光暖色调淡出
+
+全片：强调假发的造型多变性
+风格：活力青春广告感`
+    },
+    {
+        id: 'c16',
+        category: 'transform',
+        title: '色彩变幻 · 彩虹变身',
+        subtitle: '单色假发 → 渐变彩虹色，视觉冲击',
+        tags: ['彩虹', '变色', '视觉冲击'],
+        content: `【转化为你变成美丽的欧美美女模特佩戴这顶假发】
+
+00:00-00:04【单色开场】
+画面：模特佩戴自然黑色假发，近景怼脸
+镜头：固定特写，均匀光
+动作：平静表情，眼神深邃
+氛围：神秘等待
+
+00:04-00:08【色彩爆发】
+画面：假发从发梢开始逐渐变色，彩虹渐变
+转场：颜色如波浪般从下到上蔓延
+特效：发光粒子效果伴随变色
+音效：魔法音效+轻快音乐
+视觉冲击：强烈的色彩对比
+
+00:08-00:12【彩虹展示】
+画面：完整彩虹渐变假发，模特转身展示
+镜头：环绕拍摄
+动作：缓慢旋转，展示360°色彩变化
+氛围：梦幻彩虹
+
+00:12-00:16【光影游戏】
+画面：不同角度光线照射，彩虹色呈现不同效果
+镜头：多角度快速切换
+动作：甩头、拨发，色彩流动
+效果：每一帧都是壁纸
+
+00:16-00:20【色彩定格】
+画面：选择最惊艳的彩虹角度，定格展示
+镜头：缓慢推进
+表情：惊喜与自信并存
+
+00:20-00:24【回归现实】
+画面：彩虹色逐渐褪去，回归自然色
+镜头：拉远
+寓意：彩虹虽美，自然更美
+
+全片：强调假发的染色可能性
+风格：前卫时尚广告感`
+    },
+    {
+        id: 'c17',
+        category: 'transform',
+        title: '双胞胎互换 · 镜像变身',
+        subtitle: '双胞胎模特互换假发，趣味转场',
+        tags: ['双胞胎', '互换', '趣味'],
+        content: `【转化为你变成美丽的欧美双胞胎美女模特佩戴这顶假发】
+
+00:00-00:04【双胞胎亮相】
+画面：双胞胎并排站立，佩戴不同颜色假发
+镜头：固定中景，对称构图
+动作：两人同时看向镜头，微笑
+氛围：神秘有趣
+
+00:04-00:08【同时转身】
+画面：两人同时转身背对镜头
+镜头：跟随拍摄
+动作：同步转身，长发飘扬
+效果：动作完全一致，增加趣味性
+
+00:08-00:12【交叉换位】
+画面：两人交叉走位，互换位置
+转场：快速模糊+闪白
+音效：轻快俏皮音乐
+作用：暗示即将互换
+
+00:12-00:16【假发互换】
+画面：两人已互换位置，假发颜色对调
+镜头：正面固定
+动作：同时转身面对镜头，展示互换后的假发
+表情：调皮眨眼
+氛围：趣味十足
+
+00:16-00:20【同步展示】
+画面：两人同步做相同动作，展示假发
+镜头：侧面跟拍
+动作：同步甩头、拨发、微笑
+效果：镜像般的同步感
+
+00:20-00:24【最终定格】
+画面：两人并肩，展示互换后的假发造型
+镜头：缓慢拉远
+结尾：同时比心，淡出
+
+全片：趣味性强，适合社交媒体传播
+风格：轻松活泼广告感`
+    },
+    
+    // 产品展示类（新增4个）
+    {
+        id: 'c18',
+        category: 'showcase',
+        title: '风吹测试 · 抗风展示',
+        subtitle: '强风环境下展示假发牢固度',
+        tags: ['抗风', '牢固', '测试'],
+        content: `【转化为你变成美丽的欧美美女模特佩戴这顶假发】
+
+00:00-00:04【平静开场】
+画面：模特站立，假发自然垂落
+镜头：固定中景，无风状态
+动作：平静微笑，整理头发
+氛围：宁静美好
+
+00:04-00:08【微风轻拂】
+画面：轻微风吹起，发丝轻轻飘动
+镜头：侧面固定
+动作：模特闭眼享受微风
+氛围：浪漫惬意
+
+00:08-00:12【强风来袭】
+画面：风力加大，头发大幅飘动
+镜头：正面固定
+动作：模特用手轻压发际线，展示牢固度
+重点：假发虽有飘动但位置稳固
+
+00:12-00:16【逆风前行】
+画面：模特逆风行走，头发向后飞扬
+镜头：跟随拍摄
+动作：大步前行，自信表情
+展示：即使逆风也不移位
+
+00:16-00:20【风中整理】
+画面：风停，模特整理被风吹乱的头发
+镜头：特写
+动作：手指轻松梳理，瞬间恢复造型
+效果：展示假发的易打理性
+
+00:20-00:24【风中定格】
+画面：再次起风，模特迎风微笑
+镜头：逆光拍摄，发丝发光
+结尾：自信定格，淡出
+
+全片：强调假发的抗风性和牢固度
+风格：户外产品测试感`
+    },
+    {
+        id: 'c19',
+        category: 'showcase',
+        title: '水下世界 · 防水展示',
+        subtitle: '水下环境展示假发防水性能',
+        tags: ['水下', '防水', '梦幻'],
+        content: `【转化为你变成美丽的欧美美女模特佩戴这顶假发】
+
+00:00-00:04【水边准备】
+画面：模特站在泳池边，佩戴假发
+镜头：固定中景，自然光
+动作：整理头发，准备入水
+氛围：夏日清凉
+
+00:04-00:08【优雅入水】
+画面：模特优雅跳入水中，水花四溅
+镜头：水下跟拍
+动作：入水后缓缓下沉，头发在水中飘逸
+效果：梦幻水下世界
+
+00:08-00:12【水下漫游】
+画面：模特在水下睁眼，头发如海藻般飘动
+镜头：多角度水下拍摄
+动作：优雅游动，头发随水流飘动
+氛围：美人鱼般的梦幻感
+
+00:12-00:16【浮出水面】
+画面：模特浮出水面，甩头甩水
+镜头：水面视角
+动作：经典出水芙蓉造型
+重点：假发依然服帖，未移位
+
+00:16-00:20【出水整理】
+画面：模特在池边整理湿发
+镜头：特写
+动作：手指梳理，展示湿发状态
+效果：假发湿后依然顺滑
+
+00:20-00:24【阳光晒干】
+画面：阳光下，湿发逐渐变干，光泽恢复
+镜头：延时效果
+结尾：干发后的完美状态，定格
+
+全片：展示假发的防水性和快干性
+风格：夏日泳池广告感`
+    },
+    {
+        id: 'c20',
+        category: 'showcase',
+        title: '360°旋转 · 全景展示',
+        subtitle: '360度全方位展示假发造型',
+        tags: ['360度', '全景', '全方位'],
+        content: `【转化为你变成美丽的欧美美女模特佩戴这顶假发】
+
+00:00-00:04【正面开场】
+画面：模特正面站立，完整展示假发正面
+镜头：固定正面，均匀光
+动作：平静微笑，双手自然下垂
+氛围：专业展示
+
+00:04-00:08【45度展示】
+画面：模特转向45度，展示侧面轮廓
+镜头：跟随转动
+动作：保持微笑，展示侧脸线条
+重点：展示假发与脸型的搭配
+
+00:08-00:12【正侧面展示】
+画面：模特转向90度，正侧面展示
+镜头：侧面固定
+动作：微微抬头，展示颈部线条
+重点：展示假发侧边层次
+
+00:12-00:16【背面展示】
+画面：模特完全转身，展示假发背面
+镜头：背面固定
+动作：轻拨发尾，展示发量
+重点：展示假发整体发量和长度
+
+00:16-00:20【另一侧展示】
+画面：继续旋转，展示另一侧
+镜头：跟随拍摄
+动作：自然转身，保持优雅
+效果：完整360°无死角展示
+
+00:20-00:24【回归正面】
+画面：转回正面，最终定格
+镜头：缓慢推进
+结尾：自信微笑，柔光淡出
+
+全片：360°全方位展示假发
+风格：专业产品目录感`
+    },
+    {
+        id: 'c21',
+        category: 'showcase',
+        title: '微距世界 · 发丝细节',
+        subtitle: '超微距展示发丝细节工艺',
+        tags: ['微距', '细节', '工艺'],
+        content: `【转化为你变成美丽的欧美美女模特佩戴这顶假发】
+
+00:00-00:04【发丝全景】
+画面：一束假发的整体展示
+镜头：微距镜头，浅景深
+动作：静止展示
+氛围：进入微观世界
+
+00:00-00:08【单根发丝】
+画面：超微距单根发丝，可见毛鳞片纹理
+镜头：超微距固定
+展示：100%顺发真人发的毛鳞片结构
+技术：展示发丝的高品质
+
+00:08-00:12【发丝交织】
+画面：多根发丝交织的细节
+镜头：微距平移
+展示：发丝之间的自然交织
+效果：如丝绸般的质感
+
+00:12-00:16【打结工艺】
+画面：蕾丝底网上的手工打结特写
+镜头：超微距
+展示：每一根发丝的手工打结细节
+技术：HD蕾丝+手工工艺
+
+00:16-00:20【光泽流动】
+画面：光线在发丝上流动的效果
+镜头：微距+光线变化
+展示：发丝的自然光泽反射
+效果：如流水般的光泽
+
+00:20-00:24【回归整体】
+画面：从微距逐渐拉远到整体
+镜头：拉远过渡
+结尾：完整假发展示，定格
+
+全片：强调假发的工艺细节
+风格：高端工艺展示感`
+    },
+    
+    // 生活方式类（新增4个）
+    {
+        id: 'c22',
+        category: 'lifestyle',
+        title: '购物时刻 · 逛街日常',
+        subtitle: '购物场景中展示假发的日常佩戴',
+        tags: ['购物', '逛街', '日常'],
+        content: `【转化为你变成美丽的欧美美女模特佩戴这顶假发】
+
+00:00-00:04【商场入口】
+画面：模特走进商场，手提购物袋
+镜头：跟随拍摄，中景
+动作：自信步伐，头发自然飘动
+氛围：都市购物氛围
+
+00:04-00:08【试衣间】
+画面：试衣间镜子前，模特试衣服
+镜头：镜中反射
+动作：换衣服时假发依然完美
+重点：展示假发在各种动作中的稳定性
+
+00:08-00:12【挑选商品】
+画面：在货架前挑选商品
+镜头：侧面固定
+动作：低头挑选，抬头整理头发
+氛围：自然购物状态
+
+00:12-00:16【镜子检查】
+画面：商场镜子前检查发型
+镜头：正面固定
+动作：对镜微笑，轻拨头发
+展示：假发在各种光线下的效果
+
+00:16-00:20【付款时刻】
+画面：收银台前，与店员互动
+镜头：过肩镜头
+动作：自然交谈，不经意拨发
+氛围：日常真实感
+
+00:20-00:24【满载而归】
+画面：手提多个购物袋，满意离开
+镜头：跟随拍摄
+结尾：回头微笑，发丝飞扬，淡出
+
+全片：展示假发在日常购物中的自然状态
+风格：都市生活vlog感`
+    },
+    {
+        id: 'c23',
+        category: 'lifestyle',
+        title: '约会准备 · 浪漫时刻',
+        subtitle: '约会前的准备过程，展示假发佩戴',
+        tags: ['约会', '浪漫', '准备'],
+        content: `【转化为你变成美丽的欧美美女模特佩戴这顶假发】
+
+00:00-00:04【素颜准备】
+画面：模特素颜坐在梳妆台前
+镜头：固定中景，自然光
+动作：看着镜中的自己，略显紧张
+氛围：约会前的期待
+
+00:04-00:08【护肤打底】
+画面：涂抹护肤品，打底妆
+镜头：特写
+动作：认真护肤，为约会做准备
+氛围：精致女孩的仪式感
+
+00:08-00:12【假发佩戴】
+画面：拿起假发，仔细佩戴
+镜头：侧面跟拍
+动作：专注调整，确保完美
+重点：展示佩戴的便捷性
+
+00:12-00:16【妆容完成】
+画面：完成精致妆容，佩戴完整假发
+镜头：正面推进
+动作：对镜微笑，自信满满
+氛围：变身完成
+
+00:16-00:20【换装时刻】
+画面：穿上漂亮的约会服装
+镜头：全身展示
+动作：转圈展示整体造型
+效果：从头到脚的完美蜕变
+
+00:20-00:24【出门赴约】
+画面：拿起包包，准备出门
+镜头：跟随拍摄
+结尾：开门前回头一笑，充满期待，淡出
+
+全片：展示假发在约会造型中的重要性
+风格：浪漫约会准备感`
+    },
+    {
+        id: 'c24',
+        category: 'lifestyle',
+        title: '居家办公 · 舒适日常',
+        subtitle: '居家办公场景中展示假发的舒适性',
+        tags: ['居家', '办公', '舒适'],
+        content: `【转化为你变成美丽的欧美美女模特佩戴这顶假发】
+
+00:00-00:04【起床时刻】
+画面：模特在床上醒来，伸懒腰
+镜头：固定中景，晨光
+动作：慵懒起床，头发自然散落
+氛围：舒适的居家环境
+
+00:04-00:08【早餐时光】
+画面：厨房做早餐，咖啡香气
+镜头：侧面固定
+动作：自然动作，头发不影响活动
+重点：展示假发的轻便性
+
+00:08-00:12【开始工作】
+画面：坐在书桌前，打开电脑
+镜头：过肩镜头
+动作：专注工作，偶尔整理头发
+氛围：居家办公的自在
+
+00:12-00:16【视频会议】
+画面：视频通话中，专业形象
+镜头：屏幕视角
+动作：自信交谈，展示专业形象
+效果：假发打造的专业感
+
+00:16-00:20【休息时刻】
+画面：靠在沙发上休息
+镜头：侧面固定
+动作：放松姿态，头发舒适自然
+氛围：居家放松感
+
+00:20-00:24【一天结束】
+画面：合上电脑，满意微笑
+镜头：缓慢拉远
+结尾：展示一天佩戴后的依然完美，淡出
+
+全片：强调假发长时间佩戴的舒适性
+风格：温馨居家感`
+    },
+    {
+        id: 'c25',
+        category: 'lifestyle',
+        title: '旅行日记 · 机场候机',
+        subtitle: '机场旅行场景中展示假发的便携性',
+        tags: ['旅行', '机场', '便携'],
+        content: `【转化为你变成美丽的欧美美女模特佩戴这顶假发】
+
+00:00-00:04【抵达机场】
+画面：模特拖着行李箱走进机场
+镜头：跟随拍摄，全景
+动作：自信步伐，长发飘逸
+氛围：旅行开始的兴奋
+
+00:04-00:08【值机柜台】
+画面：排队值机，与工作人员交流
+镜头：侧面固定
+动作：自然站立，头发整齐
+展示：长时间佩戴依然完美
+
+00:08-00:12【安检时刻】
+画面：通过安检，取下包包
+镜头：正面固定
+动作：自然动作，假发稳固
+重点：展示假发的牢固度
+
+00:12-00:16【候机休息】
+画面：候机厅休息，看手机
+镜头：中景固定
+动作：舒适坐姿，头发自然垂落
+氛围：等待中的放松
+
+00:16-00:20【登机时刻】
+画面：走向登机口，准备登机
+镜头：跟随拍摄
+动作：步伐轻快，头发随风轻扬
+氛围：即将启程的期待
+
+00:20-00:24【机舱内】
+画面：坐在座位上，望向窗外
+镜头：侧面固定
+结尾：飞机起飞，发丝在空调风中轻扬，淡出
+
+全片：展示假发在旅行中的便携和实用性
+风格：旅行vlog感`
+    },
+    
+    // 情绪表达类（新增4个）
+    {
+        id: 'c26',
+        category: 'emotion',
+        title: '神秘诱惑 · 暗夜玫瑰',
+        subtitle: '神秘诱惑风格，暗夜氛围',
+        tags: ['神秘', '诱惑', '暗夜'],
+        content: `【转化为你变成美丽的欧美美女模特佩戴这顶假发】
+
+00:00-00:04【暗夜出场】
+画面：黑暗中，只有轮廓可见
+镜头：固定远景，低光
+动作：缓慢从黑暗中走出
+氛围：神秘莫测
+
+00:04-00:08【光影交错】
+画面：一束光打在模特脸上，半明半暗
+镜头：特写固定
+动作：眼神深邃，嘴唇微张
+氛围：诱惑神秘
+
+00:08-00:12【发丝发光】
+画面：逆光下，发丝边缘发光
+镜头：侧面固定
+动作：轻拨头发，发丝如丝般流动
+效果：暗夜中的光芒
+
+00:12-00:16【眼神锁定】
+画面：直视镜头，眼神勾人
+镜头：缓慢推进
+表情：似笑非笑，充满神秘感
+氛围：让人无法移开目光
+
+00:16-00:20【转身离去】
+画面：转身走入黑暗
+镜头：跟随拍摄
+动作：回眸一瞥，留下悬念
+氛围：神秘消失
+
+00:20-00:24【最终定格】
+画面：黑暗中只剩发丝的光芒
+镜头：特写
+结尾：光芒消失，神秘结束
+
+全片：神秘诱惑的暗夜风格
+风格：暗夜玫瑰般的诱惑感`
+    },
+    {
+        id: 'c27',
+        category: 'emotion',
+        title: '复古风情 · 怀旧年代',
+        subtitle: '复古风格，怀旧年代感',
+        tags: ['复古', '怀旧', '年代'],
+        content: `【转化为你变成美丽的欧美美女模特佩戴这顶假发】
+
+00:00-00:04【复古开场】
+画面：复古滤镜，老式电影质感
+镜头：固定中景，颗粒感
+动作：模仿老电影明星的姿态
+氛围：怀旧年代
+
+00:04-00:08【经典造型】
+画面：复古卷发造型，如玛丽莲梦露
+镜头：侧面固定
+动作：经典捂裙 pose，妩媚动人
+风格：50年代好莱坞
+
+00:08-00:12【黑白转彩色】
+画面：从黑白逐渐变为彩色
+转场：颜色渐变效果
+动作：表情从严肃变为微笑
+效果：时光穿越
+
+00:12-00:16【复古与现代】
+画面：复古造型在现代背景中
+镜头：对比构图
+动作：在现代环境中展示复古美
+氛围：古今交融
+
+00:16-00:20【经典定格】
+画面：模仿经典电影海报 pose
+镜头：正面固定
+动作：手扶头发，经典微笑
+效果：致敬经典
+
+00:20-00:24【时光流逝】
+画面：画面逐渐褪色为老照片
+镜头：拉远
+结尾：如老照片般定格，淡出
+
+全片：复古怀旧风格
+风格：致敬经典好莱坞`
+    },
+    {
+        id: 'c28',
+        category: 'emotion',
+        title: '文艺清新 · 森系少女',
+        subtitle: '文艺清新风格，森系少女氛围',
+        tags: ['文艺', '清新', '森系'],
+        content: `【转化为你变成美丽的欧美美女模特佩戴这顶假发】
+
+00:00-00:04【森林入场】
+画面：模特在森林中漫步
+镜头：跟随拍摄，自然光透过树叶
+动作：轻盈步伐，如林间精灵
+氛围：清新自然
+
+00:04-00:08【阳光斑驳】
+画面：阳光透过树叶，斑驳光影在脸上
+镜头：特写固定
+动作：抬头感受阳光，闭眼微笑
+氛围：森系文艺
+
+00:08-00:12【花环点缀】
+画面：戴上野花编成的花环
+镜头：侧面跟拍
+动作：手指轻触花朵，与自然互动
+效果：森林女神感
+
+00:12-00:16【阅读时光】
+画面：坐在树下看书
+镜头：俯拍角度
+动作：低头阅读，发丝垂落
+氛围：文艺安静
+
+00:16-00:20【风吹发丝】
+画面：林风吹过，发丝与树叶同舞
+镜头：慢动作
+动作：享受微风，自然拨发
+效果：人与自然和谐
+
+00:20-00:24【森林告别】
+画面：向森林深处走去，背影
+镜头：缓慢拉远
+结尾：融入自然，淡出
+
+全片：文艺清新的森系风格
+风格：森林系少女文艺感`
+    },
+    {
+        id: 'c29',
+        category: 'emotion',
+        title: '摇滚酷girl · 叛逆青春',
+        subtitle: '摇滚风格，叛逆酷girl氛围',
+        tags: ['摇滚', '酷girl', '叛逆'],
+        content: `【转化为你变成美丽的欧美美女模特佩戴这顶假发】
+
+00:00-00:04【摇滚出场】
+画面：黑暗中，摇滚音乐响起
+镜头：固定中景，彩色灯光
+动作：酷炫出场，气场全开
+氛围：摇滚现场
+
+00:04-00:08【甩头瞬间】
+画面：激烈甩头，头发飞扬
+镜头：慢动作
+动作：摇滚经典甩头动作
+效果：叛逆不羁
+
+00:08-00:12【酷炫pose】
+画面：手拨吉他姿势，酷炫表情
+镜头：侧面固定
+动作：模仿摇滚明星 pose
+氛围：酷girl本色
+
+00:12-00:16【烟雾效果】
+画面：烟雾中，彩色灯光闪烁
+镜头：跟随拍摄
+动作：在烟雾中舞动
+效果：摇滚演唱会氛围
+
+00:16-00:20【眼神杀】
+画面：直视镜头，叛逆眼神
+镜头：特写推进
+表情：酷酷的不屑表情
+氛围：生人勿近
+
+00:20-00:24【摇滚定格】
+画面：经典摇滚手势，定格
+镜头：固定
+结尾：摇滚精神永存，淡出
+
+全片：摇滚叛逆风格
+风格：摇滚酷girl态度`
+    },
+    
+    // 新增类别：互动类（4个）
+    {
+        id: 'c30',
+        category: 'emotion',
+        title: '宠物互动 · 温馨时刻',
+        subtitle: '与宠物互动，展示假发的亲和力',
+        tags: ['宠物', '温馨', '互动'],
+        content: `【转化为你变成美丽的欧美美女模特佩戴这顶假发】
+
+00:00-00:04【宠物出场】
+画面：可爱的宠物（猫/狗）入镜
+镜头：固定中景
+动作：宠物好奇地看着模特
+氛围：温馨可爱
+
+00:04-00:08【互动开始】
+画面：模特蹲下与宠物互动
+镜头：侧面固定
+动作：抚摸宠物，头发垂落
+效果：展示假发的自然状态
+
+00:08-00:12【宠物好奇】
+画面：宠物好奇地嗅闻假发
+镜头：特写
+动作：宠物轻触发丝，模特微笑
+氛围：有趣互动
+
+00:12-00:16【亲密时刻】
+画面：抱着宠物，亲密合影
+镜头：正面固定
+动作：与宠物贴贴，幸福表情
+效果：亲和力满分
+
+00:16-00:20【玩耍时光】
+画面：与宠物玩耍，跑动互动
+镜头：跟随拍摄
+动作：活力互动，头发随动
+展示：假发的牢固度
+
+00:20-00:24【温馨定格】
+画面：宠物依偎在模特身边
+镜头：缓慢拉远
+结尾：温馨画面，淡出
+
+全片：展示假发在日常宠物互动中的自然状态
+风格：温馨宠物互动感`
+    },
+    {
+        id: 'c31',
+        category: 'showcase',
+        title: '闺蜜同框 · 双美展示',
+        subtitle: '两位模特同框，展示不同假发造型',
+        tags: ['闺蜜', '同框', '对比'],
+        content: `【转化为你变成美丽的欧美美女模特A和模特B佩戴不同假发】
+
+00:00-00:04【闺蜜亮相】
+画面：两位模特并肩站立，不同造型
+镜头：固定中景
+动作：同时看向镜头，微笑
+氛围：闺蜜情深
+
+00:04-00:08【各自展示】
+画面：分别展示各自的假发造型
+镜头：分屏或切换
+动作：A展示长发，B展示短发
+效果：不同风格对比
+
+00:08-00:12【互动交流】
+画面：两人互动，互相整理头发
+镜头：侧面固定
+动作：A帮B整理刘海，B帮A拨发
+氛围：真实闺蜜互动
+
+00:12-00:16【同框对比】
+画面：两人并排，展示对比效果
+镜头：正面固定
+动作：同时甩头，展示不同发型的动态
+效果：长短/卷直对比
+
+00:16-00:20【自拍时刻】
+画面：两人自拍，开心互动
+镜头：自拍视角
+动作：比耶、做鬼脸、亲密贴贴
+氛围：年轻活力
+
+00:20-00:24【闺蜜定格】
+画面：两人并肩，自信微笑
+镜头：缓慢拉远
+结尾：闺蜜同框，淡出
+
+全片：展示不同假发造型的搭配效果
+风格：闺蜜时尚杂志感`
+    },
+    {
+        id: 'c32',
+        category: 'lifestyle',
+        title: '美食探店 · 吃货日常',
+        subtitle: '美食探店场景中展示假发的日常佩戴',
+        tags: ['美食', '探店', '吃货'],
+        content: `【转化为你变成美丽的欧美美女模特佩戴这顶假发】
+
+00:00-00:04【餐厅入场】
+画面：走进网红餐厅，环境精美
+镜头：跟随拍摄
+动作：兴奋地环顾四周
+氛围：美食探店期待
+
+00:04-00:08【点餐时刻】
+画面：看着菜单，纠结选择
+镜头：侧面固定
+动作：手指卷绕发丝，思考中
+氛围：可爱纠结
+
+00:08-00:12【美食上桌】
+画面：精致美食上桌，惊喜表情
+镜头：特写食物+模特反应
+动作：开心地看着美食
+效果：美食与美女同框
+
+00:12-00:16【享用美食】
+画面：品尝美食，满足表情
+镜头：正面固定
+动作：低头用餐，头发自然垂落
+展示：假发不影响日常活动
+
+00:16-00:20【拍照打卡】
+画面：与美食合影，打卡拍照
+镜头：自拍视角
+动作：找角度，比耶，展示美食
+氛围：网红打卡感
+
+00:20-00:24【满足离店】
+画面：满意地离开餐厅
+镜头：跟随拍摄
+结尾：满足微笑，发丝飞扬，淡出
+
+全片：展示假发在美食探店中的自然状态
+风格：美食博主vlog感`
+    },
+    {
+        id: 'c33',
+        category: 'transform',
+        title: '季节变换 · 四季造型',
+        subtitle: '展示假发在四季不同场景中的造型',
+        tags: ['四季', '变换', '场景'],
+        content: `【转化为你变成美丽的欧美美女模特佩戴这顶假发】
+
+00:00-00:05【春日樱花】
+画面：樱花树下，粉色花瓣飘落
+镜头：固定中景
+造型：清新长直发，粉色系
+氛围：春日浪漫
+
+转场：花瓣过渡
+
+00:05-00:10【夏日海滩】
+画面：海边沙滩，阳光耀眼
+镜头：跟随拍摄
+造型：大波浪卷发，活力感
+氛围：夏日热情
+
+转场：海浪过渡
+
+00:10-00:15【秋日落叶】
+画面：金黄落叶中漫步
+镜头：侧面固定
+造型：优雅低马尾，暖色调
+氛围：秋日温暖
+
+转场：落叶过渡
+
+00:15-00:20【冬日雪景】
+画面：雪景中，呼出白气
+镜头：正面固定
+造型：时尚短发，冷色调
+氛围：冬日时尚
+
+00:20-00:25【四季同框】
+画面：分屏展示四季造型
+镜头：固定分屏
+效果：一顶假发，四季皆宜
+
+00:25-00:30【最终定格】
+画面：选择最喜欢的一个季节造型
+镜头：缓慢推进
+结尾：自信微笑，淡出
+
+全片：展示假发适应四季不同风格
+风格：四季变换广告感`
+    }
+];
+
+// ========== 渲染创意提示词 ==========
+function renderCreative(filter = 'all') {
+    const container = document.getElementById('creative-container');
+    const filtered = filter === 'all' ? creativeData : creativeData.filter(c => c.category === filter);
+    
+    container.innerHTML = filtered.map(item => `
+        <div class="card" style="margin-bottom:20px; overflow:hidden;">
+            <div class="collapsible" onclick="toggleCreative('${item.id}')" style="padding:20px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+                <div style="flex:1; min-width:280px;">
+                    <h3 style="font-size:17px; font-weight:700; margin-bottom:6px;">${item.title}</h3>
+                    <p style="color:#64748b; font-size:13px;">${item.subtitle}</p>
+                    <div style="display:flex; gap:6px; margin-top:8px; flex-wrap:wrap;">
+                        ${item.tags.map(tag => `<span class="tag" style="background:#1e3a5f; color:#7dd3fc;">${tag}</span>`).join('')}
+                    </div>
+                </div>
+                <span id="arrow-creative-${item.id}" style="font-size:20px; color:#64748b;">▼</span>
+            </div>
+            <div id="content-creative-${item.id}" class="collapsible-content" style="padding:0 20px 20px;">
+                <div class="prompt-box" style="padding:16px; max-height:400px; overflow-y:auto;">
+                    <pre id="creative-prompt-${item.id}" style="margin:0; font-size:13px; line-height:1.7;">${item.content}</pre>
+                </div>
+                <button class="copy-btn" onclick="copyCreativePrompt('${item.id}')" style="margin-top:12px;">复制提示词</button>
+            </div>
+        </div>
+    `).join('');
+}
+
+// 切换创意展开/收起
+function toggleCreative(id) {
+    const content = document.getElementById(`content-creative-${id}`);
+    const arrow = document.getElementById(`arrow-creative-${id}`);
+    content.classList.toggle('open');
+    arrow.textContent = content.classList.contains('open') ? '▲' : '▼';
+}
+
+// 复制创意提示词
+function copyCreativePrompt(id) {
+    const el = document.getElementById(`creative-prompt-${id}`);
+    if (!el) return;
+    const text = el.innerText;
+    navigator.clipboard.writeText(text).then(() => {
+        const btn = event.target;
+        const orig = btn.innerText;
+        btn.innerText = '✓ 已复制';
+        btn.style.color = '#10b981';
+        setTimeout(() => { btn.innerText = orig; btn.style.color = ''; }, 1500);
+    });
+}
+
+// 筛选创意
+function filterCreative(category) {
+    document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+    event.target.classList.add('active');
+    renderCreative(category);
+}
+
+// ========== 提示词数据 ==========
+const promptsData = [
+    // 产品展示类
+    {
+        id: 'p1',
+        category: 'product',
+        title: '口播介绍 · 产品功能讲解',
+        tags: ['口播', '教育', '信任建立'],
+        content: `专业美妆博主站在干净明亮的摄影棚中，手持一顶高端蕾丝假发，与镜头进行眼神交流。
+
+镜头：固定中近景，f/2.8浅景深
+灯光：大型柔光箱主光正面打亮，背后微妙轮廓光营造发丝光晕
+时长：30秒
+风格：教育性、温暖、值得信赖的语调
+
+动作：她缓慢翻转假发，展示HD蕾丝底网、手工打结工艺和真丝内衬。表情自信且令人安心。
+
+配音："让我告诉你为什么这顶假发感觉就像你自己的真发。首先是HD蕾丝——它融入你的皮肤，发际线完全隐形。每一个结都是手工打的。而且这是100%顺发真人发，毛鳞片对齐，零打结。"
+
+B-roll：蕾丝细节特写、发丝捕捉光线、手指滑过丝滑发丝
+调色：温暖、干净的白平衡，极少颗粒感
+平台：YouTube / Instagram Reels (16:9 或 1:1)`
+    },
+    {
+        id: 'p2',
+        category: 'product',
+        title: '产品特写 · 发丝质感展示',
+        tags: ['特写', '质感', '光泽'],
+        content: `高端假发产品特写展示视频，15秒，9:16竖屏。
+
+镜头1（0-3秒）：
+超慢动作发丝飘动（120fps）。逆光下每根发丝清晰可见，呈现金色阳光穿透效果。音效：轻柔的嗖嗖声。
+
+镜头2（3-7秒）：
+手指轻柔穿过发丝，展示顺滑触感。微距镜头捕捉发丝在指尖滑落的细节。
+
+镜头3（7-12秒）：
+多角度旋转展示假发整体造型，从顶部到发尾的完整呈现。
+
+镜头4（12-15秒）：
+产品平铺俯拍，假发+梳子+真丝发网整齐摆放。文字："感受真发质感"
+
+调色：奶油暖白，金色高光
+音乐：轻柔钢琴曲`
+    },
+    {
+        id: 'p3',
+        category: 'product',
+        title: '佩戴过程 · 快速展示',
+        tags: ['教程', '快速', '便捷'],
+        content: `假发佩戴过程快速展示，20秒，9:16竖屏。
+
+场景：明亮的梳妆台区域，模特面对镜子，相机位置在肩膀后方，同时展示镜中面部和手部动作。
+
+步骤1（0-4秒）：工具展示——假发防滑带、边缘喷雾、发夹、尖尾梳平铺特写平移。
+
+步骤2（4-8秒）：头发准备——将真发编平，戴上假发网。过肩镜头。
+
+步骤3（8-14秒）：假发佩戴——将蕾丝对准发际线，按压边缘，检查镜子。动作缓慢而从容。
+
+步骤4（14-18秒）：调整定型——用手指整理，轻轻甩头展示贴合度。
+
+步骤5（18-20秒）：最终展示——模特转向镜头，甩动头发，自信微笑。戏剧性展示灯光。
+
+图形：步骤计数器叠加（1/5, 2/5...），产品名称标签。
+音乐：轻快教程背景音乐。`
+    },
+    {
+        id: 'p4',
+        category: 'product',
+        title: '测评对比 · 真发vs化纤',
+        tags: ['对比', '测评', '客观'],
+        content: `左右分屏假发对比测评，30秒。
+
+【分屏设置】：
+左侧：真人发假发（标注"100%顺发真人发"）
+右侧：化纤假发（标注"化纤纤维"）
+
+两个假发在相同灯光下展示于模特头上。
+镜头：缓慢平移，每个假发展示时间相等。
+
+测试1——触感与质地（0-8秒）：
+手同时轻柔穿过两个假发。
+特写：发丝自然升降 vs 僵硬回弹。
+文字："触感测试"
+
+测试2——光泽与光线（8-18秒）：
+侧光照射两个假发。
+真人发：柔和自然光泽。化纤：不自然的塑料光泽。
+文字："光线测试"
+
+测试3——热造型（18-25秒）：
+直板夹分别作用于小部分发丝。
+真人发：顺滑效果。化纤：融化/损坏警告。
+文字："热测试 ⚠️"
+
+测试4——价格vs价值（25-30秒）：
+模特出现在屏幕前，手持两个假发。
+配音："同价位——但这顶能用3倍时间。你算一下。"
+
+调色：干净、客观、微冷色调。`
+    },
+    
+    // 场景氛围类
+    {
+        id: 's1',
+        category: 'scene',
+        title: '车内日常 · 通勤时刻',
+        tags: ['车内', '日常', '真实'],
+        content: `真实车内vlog风格视频，15秒，9:16竖屏。
+
+场景：女性坐在驾驶座。下午晚些时候温暖光线透过车窗。仪表盘和方向盘略微可见。
+
+镜头：手机相机POV，手持轻微晃动——真实，不精致。
+
+动作序列：
+0-3秒：快速瞥向后视镜。她发现假发需要调整。
+3-8秒：从中央控制台拿出小梳子。在镜中轻柔整理发际线。自然、熟练的动作。
+8-12秒：快速手指拨弄，轻甩头发。满意微笑。
+12-15秒：外景：十字路口的车，金色光线，她的剪影短暂可见。
+
+叠加文字："当你的假发看起来这么好，连堵车都是种享受 ✨"
+
+风格：真实，略微颗粒感，像真实TikTok内容。
+色调：温暖金色内饰，自然色调。无重滤镜。
+音频：环境车声渐变为lo-fi节拍。`
+    },
+    {
+        id: 's2',
+        category: 'scene',
+        title: '咖啡厅氛围 · 都市休闲',
+        tags: ['咖啡厅', '休闲', '精致'],
+        content: `Instagram风格咖啡厅氛围视频，20秒，9:16竖屏。
+
+场景：时尚咖啡厅，大窗户透进自然光。模特坐在窗边位置，笔记本电脑和咖啡杯在桌上。
+
+镜头1（0-4秒）：
+缓慢推进镜头，从咖啡厅环境到模特侧脸轮廓。侧逆光勾勒发丝边缘。
+
+镜头2（4-8秒）：
+模特轻啜咖啡，头发自然垂落肩头。手持跟拍，捕捉自然瞬间。
+
+镜头3（8-12秒）：
+手指轻撩耳边发丝，展示假发与真发的自然融合。特写固定。
+
+镜头4（12-16秒）：
+与镜头互动，自然拨弄头发，微笑。正面固定机位。
+
+镜头5（16-20秒）：
+起身离开，背影+发丝飘动。跟随拍摄。
+
+调色：温暖奶油色调，柔和对比
+音乐：轻快爵士背景音乐`
+    },
+    {
+        id: 's3',
+        category: 'scene',
+        title: '海边度假 · 夏日风情',
+        tags: ['海边', '度假', '大波浪'],
+        content: `夏日海边度假风格视频，25秒，9:16竖屏。
+
+场景：阳光明媚的海滩，蔚蓝海水，金色沙滩。
+
+镜头1（0-3秒）：
+远景固定，海浪拍打沙滩，模特从远处走来。
+
+镜头2（3-7秒）：
+跟随拍摄，模特漫步沙滩，长卷发随风飘逸。侧逆光营造梦幻感。
+
+镜头3（7-11秒）：
+海风吹拂，大波浪自然飘动。手持跟拍，捕捉动态美感。
+
+镜头4（11-14秒）：
+阳光穿透发丝，金色光泽特写。固定机位。
+
+镜头5（14-18秒）：
+坐在沙滩椅上，慵懒整理头发。侧面固定，柔光。
+
+镜头6（18-22秒）：
+手指拨弄微湿发丝，展示抗湿性。特写推进。
+
+镜头7（22-25秒）：
+背影走向海边，发丝随风飞扬。缓慢拉远。
+
+调色：明亮饱和，夏日活力感
+音乐：轻快夏日流行曲`
+    },
+    {
+        id: 's4',
+        category: 'scene',
+        title: '办公室场景 · 职场干练',
+        tags: ['办公室', '职场', 'OL风'],
+        content: `现代办公室场景视频，20秒，9:16竖屏。
+
+场景：现代办公环境，落地窗外城市景观。干练短发或低马尾造型。
+
+镜头1（0-3秒）：
+缓慢推进，展示办公环境。窗光自然打亮。
+
+镜头2（3-6秒）：
+模特坐在工位，专注工作。侧面固定，均匀光。
+
+镜头3（6-9秒）：
+低头看文件，短发/低马尾垂落。俯拍角度，顶光。
+
+镜头4（9-12秒）：
+抬头瞬间，发丝自然滑落。特写固定，侧光。
+
+镜头5（12-16秒）：
+会议室场景，自信发言。正面固定，柔光。
+
+镜头6（16-20秒）：
+整理耳边碎发，优雅动作。侧面跟拍，窗光。
+
+调色：干净专业，略微冷调
+音乐：轻快节奏感背景音乐`
+    },
+    {
+        id: 's5',
+        category: 'scene',
+        title: '卧室私密 · 晨起梳妆',
+        tags: ['卧室', '私密', '温馨'],
+        content: `温馨卧室晨起场景，20秒，9:16竖屏。
+
+场景：柔和晨光透过窗帘，温暖舒适的卧室环境。
+
+镜头1（0-3秒）：
+全景缓慢横移，展示卧室环境，晨光透过窗帘。
+
+镜头2（3-6秒）：
+模特坐在梳妆台前，拿起假发。固定机位，柔光。
+
+镜头3（6-10秒）：
+佩戴假发过程，动作优雅。侧面跟拍，侧光。
+
+镜头4（10-13秒）：
+整理发际线，自然融合。特写推进，正面柔光。
+
+镜头5（13-16秒）：
+对镜审视，满意微笑。镜中反射，均匀光。
+
+镜头6（16-20秒）：
+甩头展示假发蓬松度。慢动作，逆光。
+
+调色：温暖柔和，私密感
+音乐：轻柔钢琴曲`
+    },
+    {
+        id: 's6',
+        category: 'scene',
+        title: '夜场派对 · 炫酷灯光',
+        tags: ['夜场', '派对', '炫酷'],
+        content: `夜场派对氛围视频，20秒，9:16竖屏。
+
+场景：霓虹灯光环境，KTV或酒吧氛围感强烈。
+
+镜头1（0-3秒）：
+缓慢横移，展示霓虹灯光环境。彩色光扫过。
+
+镜头2（3-6秒）：
+模特坐在沙发，灯光扫过头发。固定机位，变色光。
+
+镜头3（6-9秒）：
+手指拨弄头发，发色随光变化。特写固定，点光源。
+
+镜头4（9-12秒）：
+闪光灯下的发丝光泽。频闪效果，强对比。
+
+镜头5（12-16秒）：
+随音乐摆动，头发飞扬。手持跟拍，彩色光。
+
+镜头6（16-20秒）：
+舞池边缘，灯光下的剪影。远景固定，逆光。
+
+调色：高对比，霓虹色彩
+音乐：电子舞曲`
+    },
+    
+    // 风格造型类
+    {
+        id: 'st1',
+        category: 'style',
+        title: '大波浪卷发 · 女神范',
+        tags: ['大波浪', '女神', '优雅'],
+        content: `大波浪卷发造型展示，20秒，9:16竖屏。
+
+场景：柔和自然光环境，突出卷发的层次感和光泽度。
+
+镜头1（0-4秒）：
+慢速旋转展示，360°呈现大波浪卷发的完整造型。环绕拍摄。
+
+镜头2（4-8秒）：
+手指轻柔卷起发束，展示弹性和卷度。特写固定。
+
+镜头3（8-12秒）：
+甩头动作，卷发自然弹动。慢动作捕捉动态美感。
+
+镜头4（12-16秒）：
+侧脸轮廓，卷发垂落肩头。侧面固定，侧逆光。
+
+镜头5（16-20秒）：
+微笑面对镜头，自信展示。正面固定，柔光。
+
+造型要点：
+- 发色：深棕/巧克力色
+- 卷度：大波浪，自然松散
+- 长度：及胸或及腰
+- 风格：优雅女神范
+
+调色：温暖柔和，突出发丝光泽
+音乐：优雅古典音乐`
+    },
+    {
+        id: 'st2',
+        category: 'style',
+        title: '干练短发 · 职场风',
+        tags: ['短发', '职场', '干练'],
+        content: `干练短发造型展示，18秒，9:16竖屏。
+
+场景：现代简约环境，突出短发的利落感。
+
+镜头1（0-3秒）：
+正面全景，展示短发整体造型。固定机位。
+
+镜头2（3-6秒）：
+侧面轮廓，展示发型的层次感和线条感。侧面固定。
+
+镜头3（6-9秒）：
+手指轻拨刘海，展示自然蓬松度。特写固定。
+
+镜头4（9-13秒）：
+转头动作，展示发型的动感和空气感。慢动作。
+
+镜头5（13-18秒）：
+自信微笑，专业形象展示。正面固定。
+
+造型要点：
+- 发色：自然黑/深棕/浅金
+- 长度：耳下3-5cm
+- 风格：波波头/精灵短发
+- 适合：职场、日常、清爽
+
+调色：干净明亮，专业感
+音乐：轻快现代音乐`
+    },
+    {
+        id: 'st3',
+        category: 'style',
+        title: '高马尾 · 活力运动',
+        tags: ['马尾', '运动', '活力'],
+        content: `高马尾造型展示，18秒，9:16竖屏。
+
+场景：明亮环境，突出马尾的活力感和牢固度。
+
+镜头1（0-3秒）：
+背面展示高马尾整体造型。固定机位。
+
+镜头2（3-6秒）：
+转头侧面，展示马尾的长度和垂坠感。侧面固定。
+
+镜头3（6-9秒）：
+跳跃动作，马尾自然摆动。慢动作，展示牢固度。
+
+镜头4（9-13秒）：
+手指梳理马尾，展示顺滑质感。特写固定。
+
+镜头5（13-18秒）：
+自信转身面对镜头，活力笑容。正面固定。
+
+造型要点：
+- 发色：自然黑/棕色/金色
+- 长度：及背或及腰
+- 卷度：直发或微卷
+- 风格：活力运动风
+
+调色：明亮清新，活力感
+音乐：动感流行音乐`
+    },
+    {
+        id: 'st4',
+        category: 'style',
+        title: '编发造型 · 精致优雅',
+        tags: ['编发', '精致', '优雅'],
+        content: `精致编发造型展示，22秒，9:16竖屏。
+
+场景：柔和光线环境，突出编发的精致工艺。
+
+镜头1（0-4秒）：
+背面展示完整编发造型。缓慢旋转。
+
+镜头2（4-8秒）：
+特写编发纹理，展示编织细节。微距感。
+
+镜头3（8-12秒）：
+侧面展示编发与脸型的搭配。侧面固定。
+
+镜头4（12-16秒）：
+手指轻触编发，展示质感和牢固度。特写固定。
+
+镜头5（16-22秒）：
+优雅转身，展示整体造型。慢动作。
+
+造型要点：
+- 编法：法式辫/荷兰辫/鱼骨辫
+- 发色：渐变/挑染效果更佳
+- 风格：精致优雅，适合约会/派对
+
+调色：柔和温暖，精致感
+音乐：优雅轻音乐`
+    },
+    {
+        id: 'st5',
+        category: 'style',
+        title: '长直发 · 清纯自然',
+        tags: ['直发', '清纯', '自然'],
+        content: `长直发造型展示，18秒，9:16竖屏。
+
+场景：自然光环境，突出直发的顺滑和光泽。
+
+镜头1（0-3秒）：
+背面展示长直发的长度和垂坠感。固定机位。
+
+镜头2（3-6秒）：
+手指从发根滑到发尾，展示顺滑质感。特写跟拍。
+
+镜头3（6-9秒）：
+甩头动作，直发飘逸。慢动作。
+
+镜头4（9-13秒）：
+侧脸轮廓，直发垂落。侧面固定，侧逆光。
+
+镜头5（13-18秒）：
+清纯微笑面对镜头。正面固定，柔光。
+
+造型要点：
+- 发色：自然黑/深棕
+- 长度：及腰
+- 风格：清纯自然，初恋感
+
+调色：干净明亮，清新感
+音乐：清新民谣`
+    },
+    
+    // 情绪表达类
+    {
+        id: 'e1',
+        category: 'emotion',
+        title: '自信展示 · 魅力释放',
+        tags: ['自信', '魅力', '展示'],
+        content: `自信魅力展示视频，20秒，9:16竖屏。
+
+场景：简洁背景，突出模特自信和假发效果。
+
+镜头1（0-4秒）：
+模特直视镜头，自信眼神。正面特写。
+
+镜头2（4-8秒）：
+缓慢甩头，发丝飞扬。慢动作，逆光。
+
+镜头3（8-12秒）：
+微笑拨弄头发，展示自然感。中景固定。
+
+镜头4（12-16秒）：
+转身回眸，魅力瞬间。慢动作。
+
+镜头5（16-20秒）：
+自信pose定格，眼神坚定。正面固定。
+
+情绪要点：
+- 眼神：自信坚定
+- 表情：自然微笑
+- 动作：从容大方
+- 氛围： empowering
+
+调色：温暖高对比，突出人物
+音乐： empowering流行曲`
+    },
+    {
+        id: 'e2',
+        category: 'emotion',
+        title: '温柔甜美 · 邻家女孩',
+        tags: ['温柔', '甜美', '邻家'],
+        content: `温柔甜美风格视频，18秒，9:16竖屏。
+
+场景：温馨柔和环境，营造邻家女孩氛围。
+
+镜头1（0-3秒）：
+低头浅笑，羞涩甜美。俯拍角度。
+
+镜头2（3-6秒）：
+抬眸看向镜头，眼神温柔。特写固定。
+
+镜头3（6-9秒）：
+手指卷绕发丝，可爱小动作。特写跟拍。
+
+镜头4（9-13秒）：
+歪头微笑，甜美pose。中景固定。
+
+镜头5（13-18秒）：
+挥手告别，甜美笑容。正面固定。
+
+情绪要点：
+- 眼神：温柔含情
+- 表情：甜美微笑
+- 动作：娇俏可爱
+- 氛围：邻家亲切
+
+调色：柔和粉嫩，甜美感
+音乐：甜美轻音乐`
+    },
+    {
+        id: 'e3',
+        category: 'emotion',
+        title: '高冷御姐 · 气场全开',
+        tags: ['高冷', '御姐', '气场'],
+        content: `高冷御姐风格视频，20秒，9:16竖屏。
+
+场景：冷色调环境，突出高冷气场。
+
+镜头1（0-4秒）：
+冷峻眼神直视镜头。正面特写，强对比光。
+
+镜头2（4-8秒）：
+缓慢转头，发丝飘逸。慢动作，侧逆光。
+
+镜头3（8-12秒）：
+轻抚发丝，优雅高冷。中景固定。
+
+镜头4（12-16秒）：
+转身背影，气场十足。跟随拍摄。
+
+镜头5（16-20秒）：
+回眸一瞥，冷艳动人。慢动作。
+
+情绪要点：
+- 眼神：冷峻深邃
+- 表情：淡然从容
+- 动作：优雅克制
+- 氛围：高冷神秘
+
+调色：冷色调，高对比
+音乐：电子冷感音乐`
+    },
+    {
+        id: 'e4',
+        category: 'emotion',
+        title: '快乐活力 · 阳光女孩',
+        tags: ['快乐', '活力', '阳光'],
+        content: `快乐活力风格视频，18秒，9:16竖屏。
+
+场景：明亮阳光环境，营造快乐氛围。
+
+镜头1（0-3秒）：
+灿烂笑容面对镜头。正面特写。
+
+镜头2（3-6秒）：
+跳跃旋转，发丝飞扬。慢动作，逆光。
+
+镜头3（6-9秒）：
+大笑拨弄头发，自然快乐。中景手持。
+
+镜头4（9-13秒）：
+对着镜头比心，甜美可爱。正面固定。
+
+镜头5（13-18秒）：
+奔跑回头，阳光笑容。跟随拍摄。
+
+情绪要点：
+- 眼神：明亮有神
+- 表情：灿烂大笑
+- 动作：活泼自然
+- 氛围：阳光快乐
+
+调色：明亮饱和，阳光感
+音乐：欢快流行曲`
+    },
+    
+    // 细节特写类
+    {
+        id: 'd1',
+        category: 'detail',
+        title: '蕾丝发际线 · 隐形效果',
+        tags: ['蕾丝', '发际线', '隐形'],
+        content: `蕾丝发际线特写展示，15秒，9:16竖屏。
+
+镜头1（0-4秒）：
+超特写蕾丝发际线，展示HD蕾丝的透明度和手工打结工艺。微距镜头。
+
+镜头2（4-8秒）：
+手指轻压蕾丝边缘，展示与皮肤的自然融合。特写跟拍。
+
+镜头3（8-12秒）：
+不同角度展示发际线自然效果。缓慢旋转。
+
+镜头4（12-15秒）：
+最终效果展示，发际线完全隐形。正面特写。
+
+技术要点：
+- 展示HD蕾丝透明度
+- 手工单根打结工艺
+- 与肤色完美融合
+- 自然发际线效果
+
+调色：中性准确，真实感
+音乐：轻科技感音乐`
+    },
+    {
+        id: 'd2',
+        category: 'detail',
+        title: '发丝光泽 · 质感展示',
+        tags: ['光泽', '质感', '特写'],
+        content: `发丝光泽质感特写，15秒，9:16竖屏。
+
+镜头1（0-4秒）：
+超特写单根发丝，展示毛鳞片和顺发质感。微距镜头。
+
+镜头2（4-8秒）：
+光线扫过发丝，展示自然光泽变化。特写固定。
+
+镜头3（8-12秒）：
+手指滑过发丝，展示顺滑触感。特写跟拍。
+
+镜头4（12-15秒）：
+发束整体光泽展示。中景固定。
+
+技术要点：
+- 100%顺发真人发
+- 毛鳞片对齐
+- 自然光泽非塑料感
+- 顺滑零打结
+
+调色：温暖突出光泽
+音乐：轻柔环境音乐`
+    },
+    {
+        id: 'd3',
+        category: 'detail',
+        title: '内网结构 · 舒适透气',
+        tags: ['内网', '结构', '舒适'],
+        content: `假发内网结构展示，15秒，9:16竖屏。
+
+镜头1（0-4秒）：
+假发内网整体展示，展示整体结构设计。俯拍。
+
+镜头2（4-8秒）：
+可调节松紧带特写，展示调节机制。特写固定。
+
+镜头3（8-12秒）：
+透气网底特写，展示透气孔设计。微距镜头。
+
+镜头4（12-15秒）：
+真丝内衬展示，强调舒适防过敏。特写固定。
+
+技术要点：
+- 3D立体剪裁
+- 可调节松紧设计
+- 透气网底
+- 真丝内衬舒适
+
+调色：中性准确
+音乐：轻科技感音乐`
+    },
+    {
+        id: 'd4',
+        category: 'detail',
+        title: '造型多变 · 一假多用',
+        tags: ['造型', '多变', '实用'],
+        content: `假发造型多变性展示，25秒，9:16竖屏。
+
+镜头1（0-5秒）：
+原始造型展示——大波浪卷发。固定机位。
+
+镜头2（5-10秒）：
+快速变换——半扎发造型。延时效果。
+
+镜头3（10-15秒）：
+快速变换——低马尾造型。延时效果。
+
+镜头4（15-20秒）：
+快速变换——侧边编发造型。延时效果。
+
+镜头5（20-25秒）：
+四种造型分屏对比展示。分屏画面。
+
+卖点：
+- 一假多用，性价比高
+- 可烫可染可造型
+- 满足不同场合需求
+- 真人发的造型自由度
+
+调色：明亮清新
+音乐：轻快变换音乐`
+    }
+];
+
+// ========== 场景数据 ==========
+const scenesData = [
+    { id: 'car', category: 'life', title: '🚗 车内拍摄', subtitle: '慵懒午后、阳光洒落、日常感', shots: [
+        {num:'1', shot:'特写', content:'手拨弄假发发丝，阳光在发梢跳跃', camera:'固定机位', light:'自然光', time:'3s'},
+        {num:'2', shot:'中景', content:'模特侧坐驾驶座，转头看窗外', camera:'慢推镜头', light:'侧逆光', time:'4s'},
+        {num:'3', shot:'近景', content:'手指穿过发丝，展示柔顺质感', camera:'特写推进', light:'柔光', time:'3s'},
+        {num:'4', shot:'中景', content:'模特对镜整理假发，自然微笑', camera:'手持微晃', light:'车内顶光', time:'4s'},
+        {num:'5', shot:'全景', content:'车窗外景+车内模特，氛围感', camera:'缓慢拉远', light:'夕阳光', time:'4s'},
+        {num:'6', shot:'特写', content:'假发发尾特写，光泽感', camera:'固定', light:'逆光', time:'2s'}
+    ]},
+    { id: 'bedroom', category: 'life', title: '🛏️ 卧室拍摄', subtitle: '温馨私密、晨起梳妆、舒适感', shots: [
+        {num:'1', shot:'全景', content:'卧室环境，晨光透过窗帘', camera:'缓慢横移', light:'窗光', time:'3s'},
+        {num:'2', shot:'中景', content:'模特坐梳妆台前，拿起假发', camera:'固定机位', light:'柔光', time:'3s'},
+        {num:'3', shot:'近景', content:'佩戴假发过程，动作优雅', camera:'侧面跟拍', light:'侧光', time:'5s'},
+        {num:'4', shot:'特写', content:'整理发际线，自然融合', camera:'特写推进', light:'正面柔光', time:'4s'},
+        {num:'5', shot:'中景', content:'对镜审视，满意微笑', camera:'镜中反射', light:'均匀光', time:'4s'},
+        {num:'6', shot:'近景', content:'甩头展示假发蓬松度', camera:'慢动作', light:'逆光', time:'3s'},
+        {num:'7', shot:'特写', content:'发丝细节，自然光泽', camera:'微距感', light:'侧光', time:'3s'}
+    ]},
+    { id: 'cafe', category: 'life', title: '☕ 咖啡厅', subtitle: '都市休闲、精致生活、社交感', shots: [
+        {num:'1', shot:'全景', content:'咖啡厅环境，模特坐在窗边位', camera:'缓慢推进', light:'窗光+暖光', time:'3s'},
+        {num:'2', shot:'中景', content:'模特点单/等咖啡，侧脸轮廓', camera:'侧面固定', light:'侧逆光', time:'4s'},
+        {num:'3', shot:'近景', content:'喝咖啡时头发自然垂落', camera:'手持跟拍', light:'柔光', time:'4s'},
+        {num:'4', shot:'特写', content:'手指轻撩耳边发丝', camera:'特写固定', light:'点光源', time:'3s'},
+        {num:'5', shot:'中景', content:'与镜头互动，自然拨弄头发', camera:'正面固定', light:'均匀光', time:'4s'},
+        {num:'6', shot:'近景', content:'低头看手机，发丝滑落', camera:'俯拍角度', light:'顶光', time:'3s'},
+        {num:'7', shot:'全景', content:'起身离开，背影+发丝飘动', camera:'跟随拍摄', light:'环境光', time:'4s'}
+    ]},
+    { id: 'gym', category: 'func', title: '🏋️ 健身房/瑜伽馆', subtitle: '活力运动、健康阳光、展示牢固度', shots: [
+        {num:'1', shot:'全景', content:'健身房环境，器械区背景', camera:'缓慢横移', light:'顶光', time:'2s'},
+        {num:'2', shot:'中景', content:'模特绑马尾假发，准备运动', camera:'固定机位', light:'均匀光', time:'3s'},
+        {num:'3', shot:'近景', content:'跑步机跑步，马尾自然摆动', camera:'侧面跟拍', light:'侧光', time:'4s'},
+        {num:'4', shot:'特写', content:'汗水滴落，假发依然服帖', camera:'特写固定', light:'点光源', time:'3s'},
+        {num:'5', shot:'中景', content:'瑜伽拉伸动作，头发不散乱', camera:'正面固定', light:'柔光', time:'4s'},
+        {num:'6', shot:'近景', content:'整理头发，展示牢固佩戴', camera:'手持微晃', light:'自然光', time:'3s'},
+        {num:'7', shot:'特写', content:'运动后的发丝光泽', camera:'微距推进', light:'侧逆光', time:'3s'}
+    ]},
+    { id: 'beach', category: 'life', title: '🏖️ 海边/泳池边', subtitle: '度假风情、夏日阳光、大波浪展示', shots: [
+        {num:'1', shot:'全景', content:'海边沙滩，海浪拍打', camera:'远景固定', light:'自然光', time:'2s'},
+        {num:'2', shot:'中景', content:'模特漫步沙滩，长发飘逸', camera:'跟随拍摄', light:'侧逆光', time:'4s'},
+        {num:'3', shot:'近景', content:'海风吹拂，大波浪自然飘动', camera:'手持跟拍', light:'夕阳光', time:'4s'},
+        {num:'4', shot:'特写', content:'阳光穿透发丝，金色光泽', camera:'固定机位', light:'逆光', time:'3s'},
+        {num:'5', shot:'中景', content:'坐在沙滩椅上，慵懒整理头发', camera:'侧面固定', light:'柔光', time:'4s'},
+        {num:'6', shot:'近景', content:'手指拨弄湿发，展示抗湿性', camera:'特写推进', light:'自然光', time:'3s'},
+        {num:'7', shot:'全景', content:'背影走向海边，发丝随风', camera:'缓慢拉远', light:'侧光', time:'4s'}
+    ]},
+    { id: 'office', category: 'work', title: '💼 办公室', subtitle: '职场干练、专业自信、OL风格', shots: [
+        {num:'1', shot:'全景', content:'现代办公环境，落地窗外城市景观', camera:'缓慢推进', light:'窗光', time:'2s'},
+        {num:'2', shot:'中景', content:'模特坐在工位，专注工作', camera:'侧面固定', light:'均匀光', time:'3s'},
+        {num:'3', shot:'近景', content:'低头看文件，短发/低马尾垂落', camera:'俯拍角度', light:'顶光', time:'3s'},
+        {num:'4', shot:'特写', content:'抬头瞬间，发丝自然滑落', camera:'特写固定', light:'侧光', time:'3s'},
+        {num:'5', shot:'中景', content:'会议室场景，自信发言', camera:'正面固定', light:'柔光', time:'4s'},
+        {num:'6', shot:'近景', content:'整理耳边碎发，优雅动作', camera:'侧面跟拍', light:'窗光', time:'3s'},
+        {num:'7', shot:'特写', content:'干练短发轮廓，职场气质', camera:'固定机位', light:'均匀光', time:'3s'}
+    ]},
+    { id: 'cafe-work', category: 'work', title: '💻 咖啡厅办公', subtitle: '自由职业、随性自然、文艺气息', shots: [
+        {num:'1', shot:'全景', content:'咖啡厅角落，笔记本电脑+咖啡', camera:'缓慢横移', light:'暖光', time:'2s'},
+        {num:'2', shot:'中景', content:'模特打字工作，侧脸轮廓', camera:'侧面固定', light:'侧逆光', time:'3s'},
+        {num:'3', shot:'近景', content:'思考时手指卷绕发丝', camera:'特写固定', light:'点光源', time:'3s'},
+        {num:'4', shot:'特写', content:'咖啡杯旁，发梢垂落桌面', camera:'固定机位', light:'柔光', time:'3s'},
+        {num:'5', shot:'中景', content:'伸懒腰，头发自然散开', camera:'正面固定', light:'环境光', time:'4s'},
+        {num:'6', shot:'近景', content:'对镜头微笑，随性拨弄头发', camera:'手持微晃', light:'窗光', time:'3s'},
+        {num:'7', shot:'全景', content:'收拾电脑离开，背影', camera:'跟随拍摄', light:'暖光', time:'3s'}
+    ]},
+    { id: 'makeup', category: 'work', title: '💄 化妆间/后台', subtitle: '专业造型、变身过程、佩戴便捷', shots: [
+        {num:'1', shot:'全景', content:'化妆间环境，镜子+灯光环绕', camera:'缓慢推进', light:'专业光', time:'2s'},
+        {num:'2', shot:'中景', content:'模特素颜坐在镜前', camera:'固定机位', light:'均匀光', time:'3s'},
+        {num:'3', shot:'近景', content:'拿起假发，展示产品', camera:'特写固定', light:'点光源', time:'3s'},
+        {num:'4', shot:'近景', content:'佩戴过程，动作熟练优雅', camera:'侧面跟拍', light:'柔光', time:'5s'},
+        {num:'5', shot:'特写', content:'调整发际线，自然融合', camera:'特写推进', light:'顶光', time:'4s'},
+        {num:'6', shot:'中景', content:'对镜审视，满意表情', camera:'镜中反射', light:'均匀光', time:'3s'},
+        {num:'7', shot:'对比', content:'戴前戴后对比展示', camera:'固定分屏', light:'专业光', time:'4s'}
+    ]},
+    { id: 'restaurant', category: 'social', title: '🍽️ 餐厅/下午茶', subtitle: '约会甜蜜、精致优雅、女神范', shots: [
+        {num:'1', shot:'全景', content:'精致餐厅环境，烛光/鲜花', camera:'缓慢推进', light:'暖光', time:'2s'},
+        {num:'2', shot:'中景', content:'模特优雅入座，整理裙摆+头发', camera:'侧面固定', light:'侧光', time:'3s'},
+        {num:'3', shot:'近景', content:'低头看菜单，卷发垂落肩头', camera:'俯拍角度', light:'点光源', time:'3s'},
+        {num:'4', shot:'特写', content:'用餐时头发别到耳后', camera:'特写固定', light:'烛光', time:'3s'},
+        {num:'5', shot:'中景', content:'与对面互动，撩发微笑', camera:'正面固定', light:'柔光', time:'4s'},
+        {num:'6', shot:'近景', content:'补口红时对镜整理发型', camera:'镜中反射', light:'均匀光', time:'3s'},
+        {num:'7', shot:'全景', content:'起身离开，优雅背影', camera:'跟随拍摄', light:'暖光', time:'4s'}
+    ]},
+    { id: 'ktv', category: 'social', title: '🎤 KTV/酒吧', subtitle: '夜场灯光、炫酷发色、派对感', shots: [
+        {num:'1', shot:'全景', content:'霓虹灯光环境，氛围感强', camera:'缓慢横移', light:'彩色光', time:'2s'},
+        {num:'2', shot:'中景', content:'模特坐在沙发，灯光扫过头发', camera:'固定机位', light:'变色光', time:'3s'},
+        {num:'3', shot:'近景', content:'手指拨弄头发，发色随光变化', camera:'特写固定', light:'点光源', time:'3s'},
+        {num:'4', shot:'特写', content:'闪光灯下的发丝光泽', camera:'频闪效果', light:'强对比', time:'3s'},
+        {num:'5', shot:'中景', content:'随音乐摆动，头发飞扬', camera:'手持跟拍', light:'彩色光', time:'4s'},
+        {num:'6', shot:'近景', content:'对镜头放电，撩发动作', camera:'正面固定', light:'侧光', time:'3s'},
+        {num:'7', shot:'全景', content:'舞池边缘，灯光下的剪影', camera:'远景固定', light:'逆光', time:'4s'}
+    ]},
+    { id: 'park', category: 'life', title: '🌳 户外野餐/公园', subtitle: '自然清新、阳光草地、真实效果', shots: [
+        {num:'1', shot:'全景', content:'公园草地，野餐垫+食物', camera:'缓慢推进', light:'自然光', time:'2s'},
+        {num:'2', shot:'中景', content:'模特坐在野餐垫上，自然放松', camera:'侧面固定', light:'侧逆光', time:'3s'},
+        {num:'3', shot:'近景', content:'阳光透过树叶，斑驳光影在发上', camera:'固定机位', light:'自然光', time:'4s'},
+        {num:'4', shot:'特写', content:'躺卧草地，发丝散落', camera:'俯拍角度', light:'顶光', time:'3s'},
+        {num:'5', shot:'中景', content:'起身甩头，展示蓬松度', camera:'慢动作', light:'逆光', time:'4s'},
+        {num:'6', shot:'近景', content:'手指梳理头发，展示柔顺', camera:'特写固定', light:'侧光', time:'3s'},
+        {num:'7', shot:'全景', content:'奔跑在草地上，长发飘扬', camera:'跟随拍摄', light:'自然光', time:'4s'}
+    ]},
+    { id: 'selfie', category: 'func', title: '🤳 对镜自拍', subtitle: '第一视角、真实感、日常分享', shots: [
+        {num:'1', shot:'特写', content:'手机屏幕，打开相机', camera:'第一视角', light:'室内光', time:'2s'},
+        {num:'2', shot:'近景', content:'镜子中模特调整角度', camera:'镜面反射', light:'均匀光', time:'3s'},
+        {num:'3', shot:'特写', content:'手机界面，对焦在头发上', camera:'屏幕录制', light:'柔光', time:'3s'},
+        {num:'4', shot:'近景', content:'模特拨弄头发，找最佳角度', camera:'镜面反射', light:'侧光', time:'4s'},
+        {num:'5', shot:'特写', content:'按下快门的瞬间', camera:'第一视角', light:'闪光灯', time:'2s'},
+        {num:'6', shot:'近景', content:'查看照片，满意表情', camera:'侧面固定', light:'均匀光', time:'3s'},
+        {num:'7', shot:'特写', content:'手机相册，多张自拍展示', camera:'屏幕展示', light:'室内光', time:'3s'}
+    ]}
+];
+
+// 渲染提示词
+function renderPrompts(filter = 'all') {
+    const container = document.getElementById('prompts-container');
+    const filtered = filter === 'all' ? promptsData : promptsData.filter(p => p.category === filter);
+    
+    container.innerHTML = filtered.map(prompt => `
+        <div class="card" style="padding:20px; margin-bottom:16px;">
+            <div style="display:flex; align-items:center; gap:10px; margin-bottom:12px; flex-wrap:wrap;">
+                <h3 style="font-size:16px; font-weight:700;">${prompt.title}</h3>
+                <div style="display:flex; gap:4px;">
+                    ${prompt.tags.map(tag => `<span class="tag" style="background:#1e3a5f; color:#7dd3fc;">${tag}</span>`).join('')}
+                </div>
+                <button class="copy-btn" onclick="copyPrompt('${prompt.id}')" style="margin-left:auto;">复制</button>
+            </div>
+            <div class="prompt-box" style="padding:14px; max-height:200px; overflow-y:auto;">
+                <pre id="prompt-${prompt.id}" style="margin:0;">${prompt.content}</pre>
+            </div>
+        </div>
+    `).join('');
+}
+
+// 复制提示词
+function copyPrompt(id) {
+    const el = document.getElementById(`prompt-${id}`);
+    if (!el) return;
+    const text = el.innerText;
+    navigator.clipboard.writeText(text).then(() => {
+        const btn = event.target;
+        const orig = btn.innerText;
+        btn.innerText = '✓ 已复制';
+        btn.style.color = '#10b981';
+        setTimeout(() => { btn.innerText = orig; btn.style.color = ''; }, 1500);
+    });
+}
+
+// 筛选提示词
+function filterPrompts(category) {
+    document.querySelectorAll('.prompt-category').forEach(btn => btn.classList.remove('active'));
+    event.target.classList.add('active');
+    renderPrompts(category);
+}
+
+// 渲染场景
+function renderScenes(filter = 'all') {
+    const container = document.getElementById('scenes-container');
+    const filtered = filter === 'all' ? scenesData : scenesData.filter(s => s.category === filter);
+    
+    container.innerHTML = filtered.map(scene => `
+        <div class="card" style="margin-bottom:20px; overflow:hidden;">
+            <div class="collapsible" onclick="toggleScene('${scene.id}')" style="padding:20px; display:flex; justify-content:space-between; align-items:center;">
+                <div>
+                    <h3 style="font-size:18px; font-weight:700; margin-bottom:4px;">${scene.title}</h3>
+                    <p style="color:#64748b; font-size:13px;">${scene.subtitle} · ${scene.shots.length}个镜头</p>
+                </div>
+                <span id="arrow-${scene.id}" style="font-size:20px; color:#64748b;">▼</span>
+            </div>
+            <div id="content-${scene.id}" class="collapsible-content" style="padding:0 20px 20px;">
+                <table class="shot-table" style="width:100%; border-collapse:collapse; font-size:13px;">
+                    <thead>
+                        <tr>
+                            <th style="padding:10px 12px; text-align:left; font-size:12px;">镜号</th>
+                            <th style="padding:10px 12px; text-align:left; font-size:12px;">景别</th>
+                            <th style="padding:10px 12px; text-align:left; font-size:12px;">画面内容</th>
+                            <th style="padding:10px 12px; text-align:left; font-size:12px;">运镜</th>
+                            <th style="padding:10px 12px; text-align:left; font-size:12px;">光线</th>
+                            <th style="padding:10px 12px; text-align:left; font-size:12px;">时长</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${scene.shots.map(shot => `
+                            <tr>
+                                <td style="padding:10px 12px; color:#64748b;">${shot.num}</td>
+                                <td style="padding:10px 12px; font-weight:600;">${shot.shot}</td>
+                                <td style="padding:10px 12px; color:#94a3b8;">${shot.content}</td>
+                                <td style="padding:10px 12px; color:#94a3b8;">${shot.camera}</td>
+                                <td style="padding:10px 12px; color:#94a3b8;">${shot.light}</td>
+                                <td style="padding:10px 12px; color:#64748b;">${shot.time}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    `).join('');
+}
+
+// 切换场景展开/收起
+function toggleScene(id) {
+    const content = document.getElementById(`content-${id}`);
+    const arrow = document.getElementById(`arrow-${id}`);
+    content.classList.toggle('open');
+    arrow.textContent = content.classList.contains('open') ? '▲' : '▼';
+}
+
+// 过滤场景
+function filterScenes(category) {
+    document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+    event.target.classList.add('active');
+    renderScenes(category);
+}
+
+// Tab切换
+function showTab(name) {
+    document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+    document.querySelectorAll('nav button').forEach(el => el.classList.remove('nav-active'));
+    document.getElementById('tab-' + name).classList.add('active');
+    document.getElementById('btn-' + name).classList.add('nav-active');
+}
+
+// ========== 编辑模式功能 ==========
+let editModeEnabled = false;
+
+// ========== 导航栏排序功能（编辑模式下可用） ==========
+let navDraggedItem = null;
+
+function enableNavSorting() {
+    const nav = document.querySelector('nav > div');
+    const buttons = nav.querySelectorAll('button[id^="btn-"]');
+    
+    buttons.forEach(btn => {
+        if (btn.id !== 'btn-editmode' && btn.id !== 'btn-save' && btn.id !== 'btn-history') {
+            btn.classList.add('nav-sorting');
+            btn.draggable = true;
+            btn.style.position = 'relative';
+            
+            // 添加排序指示器
+            if (!btn.querySelector('.sort-indicator')) {
+                const indicator = document.createElement('span');
+                indicator.innerHTML = ' ⋮⋮';
+                indicator.style.cssText = 'margin-left:4px; opacity:0.6; font-size:10px;';
+                indicator.className = 'sort-indicator';
+                btn.appendChild(indicator);
+            }
+            
+            // 绑定拖拽事件
+            btn.addEventListener('dragstart', handleNavDragStart);
+            btn.addEventListener('dragover', handleNavDragOver);
+            btn.addEventListener('drop', handleNavDrop);
+            btn.addEventListener('dragend', handleNavDragEnd);
+        }
+    });
+}
+
+function disableNavSorting() {
+    const nav = document.querySelector('nav > div');
+    const buttons = nav.querySelectorAll('button[id^="btn-"]');
+    
+    buttons.forEach(btn => {
+        btn.classList.remove('nav-sorting', 'nav-dragging', 'nav-drop-target');
+        btn.draggable = false;
+        
+        // 移除排序指示器
+        const indicator = btn.querySelector('.sort-indicator');
+        if (indicator) {
+            indicator.remove();
+        }
+        
+        // 移除拖拽事件
+        btn.removeEventListener('dragstart', handleNavDragStart);
+        btn.removeEventListener('dragover', handleNavDragOver);
+        btn.removeEventListener('drop', handleNavDrop);
+        btn.removeEventListener('dragend', handleNavDragEnd);
+    });
+    
+    navDraggedItem = null;
+}
+
+function handleNavDragStart(e) {
+    navDraggedItem = e.target;
+    e.target.classList.add('nav-dragging');
+    e.dataTransfer.effectAllowed = 'move';
+}
+
+function handleNavDragOver(e) {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    
+    const target = e.target.closest('button');
+    if (target && target !== navDraggedItem && target.id !== 'btn-editmode' && target.id !== 'btn-save' && target.id !== 'btn-history') {
+        target.classList.add('nav-drop-target');
+    }
+}
+
+function handleNavDrop(e) {
+    e.preventDefault();
+    
+    const target = e.target.closest('button');
+    if (target && target !== navDraggedItem && target.id !== 'btn-editmode' && target.id !== 'btn-save' && target.id !== 'btn-history') {
+        const nav = document.querySelector('nav > div');
+        const allButtons = Array.from(nav.querySelectorAll('button[id^="btn-"]'));
+        const draggedIndex = allButtons.indexOf(navDraggedItem);
+        const targetIndex = allButtons.indexOf(target);
+        
+        if (draggedIndex < targetIndex) {
+            nav.insertBefore(navDraggedItem, target.nextSibling);
+        } else {
+            nav.insertBefore(navDraggedItem, target);
+        }
+    }
+}
+
+function handleNavDragEnd(e) {
+    e.target.classList.remove('nav-dragging');
+    
+    const nav = document.querySelector('nav > div');
+    const buttons = nav.querySelectorAll('button[id^="btn-"]');
+    buttons.forEach(btn => {
+        btn.classList.remove('nav-drop-target');
+    });
+    
+    navDraggedItem = null;
+}
+
+function toggleEditMode() {
+    editModeEnabled = !editModeEnabled;
+    const btn = document.getElementById('btn-editmode');
+    const saveBtn = document.getElementById('btn-save');
+    
+    if (editModeEnabled) {
+        btn.classList.add('edit-mode-active');
+        btn.innerHTML = '✓ 完成编辑';
+        saveBtn.style.display = 'inline-block';
+        enableEditing();
+        enableNavSorting();
+        enablePlatformSorting();
+        showNotification('编辑模式已开启 - 点击文字编辑，拖拽按钮排序');
+    } else {
+        btn.classList.remove('edit-mode-active');
+        btn.innerHTML = '✏️ 编辑模式';
+        saveBtn.style.display = 'none';
+        disableEditing();
+        disableNavSorting();
+        disablePlatformSorting();
+        showNotification('编辑已保存');
+    }
+}
+
+// ========== 保存页面更改 ==========
+function savePageChanges() {
+    // 获取当前页面的完整HTML
+    const htmlContent = document.documentElement.outerHTML;
+    
+    // 保存到localStorage历史记录
+    saveToHistory(htmlContent);
+    
+    showNotification('💾 页面已保存到历史记录！');
+}
+
+// ========== 历史记录功能 ==========
+const HISTORY_KEY = 'wig_content_history';
+const MAX_HISTORY_ITEMS = 10;
+
+function saveToHistory(htmlContent) {
+    let history = JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]');
+    
+    const historyItem = {
+        id: Date.now(),
+        time: new Date().toLocaleString('zh-CN'),
+        timestamp: Date.now(),
+        preview: getContentPreview(),
+        html: htmlContent
+    };
+    
+    // 添加到开头
+    history.unshift(historyItem);
+    
+    // 限制数量
+    if (history.length > MAX_HISTORY_ITEMS) {
+        history = history.slice(0, MAX_HISTORY_ITEMS);
+    }
+    
+    localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
+}
+
+function getContentPreview() {
+    // 获取当前页面的简要预览信息
+    const navButtons = Array.from(document.querySelectorAll('nav button')).map(b => b.textContent.trim()).slice(0, 3).join(', ');
+    const platformTags = Array.from(document.querySelectorAll('.platform-sortable')).map(t => t.textContent.trim()).slice(0, 3).join(', ');
+    return `导航: ${navButtons}... | 平台: ${platformTags}...`;
+}
+
+function getHistory() {
+    return JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]');
+}
+
+function toggleHistoryPanel() {
+    const existingPanel = document.getElementById('history-panel');
+    if (existingPanel) {
+        existingPanel.remove();
+        const overlay = document.getElementById('history-overlay');
+        if (overlay) overlay.remove();
+        return;
+    }
+    
+    renderHistoryPanel();
+}
+
+function renderHistoryPanel() {
+    const history = getHistory();
+    
+    // 创建遮罩层
+    const overlay = document.createElement('div');
+    overlay.id = 'history-overlay';
+    overlay.className = 'history-overlay';
+    overlay.style.display = 'block';
+    overlay.onclick = toggleHistoryPanel;
+    document.body.appendChild(overlay);
+    
+    // 创建面板
+    const panel = document.createElement('div');
+    panel.id = 'history-panel';
+    panel.className = 'history-panel';
+    
+    panel.innerHTML = `
+        <h3>📜 历史保存记录</h3>
+        <div style="color: #64748b; font-size: 12px; margin-bottom: 12px;">共 ${history.length} 条记录 (最多保存10条)</div>
+        <div id="history-list">
+            ${history.length === 0 ? '<div style="color: #64748b; text-align: center; padding: 20px;">暂无保存记录</div>' : ''}
+            ${history.map((item, index) => `
+                <div class="history-item ${index === 0 ? 'active' : ''}" onclick="previewHistoryItem(${item.id})">
+                    <div class="history-time">${item.time} ${index === 0 ? '(最新)' : ''}</div>
+                    <div class="history-preview">${item.preview}</div>
+                </div>
+            `).join('')}
+        </div>
+        <div class="history-actions">
+            <button onclick="restoreHistoryItem()" style="background: #3b82f6; color: white;">↩️ 恢复选中</button>
+            <button onclick="clearHistory()" style="background: #ef4444; color: white;">🗑️ 清空</button>
+        </div>
+        <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid #334155; font-size: 11px; color: #64748b;">
+            提示：点击记录可预览，恢复会覆盖当前页面
+        </div>
+    `;
+    
+    document.body.appendChild(panel);
+    
+    // 保存当前选中的历史记录ID
+    panel.dataset.selectedId = history.length > 0 ? history[0].id : '';
+}
+
+function previewHistoryItem(id) {
+    const panel = document.getElementById('history-panel');
+    if (!panel) return;
+    
+    // 更新选中状态
+    panel.querySelectorAll('.history-item').forEach(item => {
+        item.classList.remove('active');
+    });
+    event.currentTarget.classList.add('active');
+    
+    // 保存选中的ID
+    panel.dataset.selectedId = id;
+    
+    // 显示预览提示
+    showNotification('📋 已选中该版本，点击"恢复选中"即可应用');
+}
+
+function restoreHistoryItem() {
+    const panel = document.getElementById('history-panel');
+    if (!panel) return;
+    
+    const selectedId = panel.dataset.selectedId;
+    if (!selectedId) {
+        showNotification('⚠️ 请先选择一条历史记录');
+        return;
+    }
+    
+    const history = getHistory();
+    const item = history.find(h => h.id == selectedId);
+    
+    if (!item) {
+        showNotification('⚠️ 未找到该历史记录');
+        return;
+    }
+    
+    if (confirm('确定要恢复到该版本吗？\n当前未保存的更改将会丢失。')) {
+        // 创建新页面
+        const newWindow = window.open('', '_blank');
+        newWindow.document.write(item.html);
+        newWindow.document.close();
+        
+        showNotification('✅ 已在新标签页打开该版本');
+        toggleHistoryPanel();
+    }
+}
+
+function clearHistory() {
+    if (confirm('确定要清空所有历史记录吗？\n此操作不可恢复。')) {
+        localStorage.removeItem(HISTORY_KEY);
+        renderHistoryPanel();
+        showNotification('🗑️ 历史记录已清空');
+    }
+}
+
+function enableEditing() {
+    // 为所有可编辑元素添加 contenteditable
+    const editableSelectors = [
+        '.card h3', '.card p', '.card div', 
+        '.prompt-box pre', '.scene-card div',
+        'table td', 'table th',
+        '.collapsible h3', '.collapsible p',
+        '#gemini-container .card div',
+        '#image-prompts-container .card div',
+        '#image-prompts-container .card h3',
+        '.filter-btn', '.prompt-category',
+        'nav button'
+    ];
+    
+    editableSelectors.forEach(selector => {
+        document.querySelectorAll(selector).forEach(el => {
+            if (el.children.length === 0 || el.textContent.trim().length > 0) {
+                el.contentEditable = 'true';
+                el.classList.add('editable');
+            }
+        });
+    });
+}
+
+function disableEditing() {
+    document.querySelectorAll('.editable').forEach(el => {
+        el.contentEditable = 'false';
+        el.classList.remove('editable');
+    });
+}
+
+function showNotification(message) {
+    const notif = document.createElement('div');
+    notif.style.cssText = `
+        position: fixed;
+        top: 70px;
+        right: 20px;
+        background: #10b981;
+        color: white;
+        padding: 12px 20px;
+        border-radius: 8px;
+        font-size: 14px;
+        z-index: 1000;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        animation: slideIn 0.3s ease;
+    `;
+    notif.textContent = message;
+    document.body.appendChild(notif);
+    
+    setTimeout(() => {
+        notif.style.animation = 'slideOut 0.3s ease';
+        setTimeout(() => notif.remove(), 300);
+    }, 3000);
+}
+
+// 添加动画样式
+const style = document.createElement('style');
+style.textContent = `
+    @keyframes slideIn {
+        from { transform: translateX(100px); opacity: 0; }
+        to { transform: translateX(0); opacity: 1; }
+    }
+    @keyframes slideOut {
+        from { transform: translateX(0); opacity: 1; }
+        to { transform: translateX(100px); opacity: 0; }
+    }
+`;
+document.head.appendChild(style);
+
+// ========== GEMINI FLOW 数据 ==========
+const geminiFlowData = [
+  // ---- 变身转场类 ----
+  {
+    id: 'gf1', category: 'transform',
+    title: '假模→真人 · 响指变身',
+    subtitle: '最经典的分身转场',
+    tags: ['分身', '转场', '变身'],
+    accent: '#4285f4',
+    shots: [
+      {
+        label: 'SHOT 1 · 假模响指',
+        prompt: `A wig mannequin head wearing a natural black long wavy wig on a clean white studio pedestal, half-body close-up shot. The mannequin slowly raises its arm to chest height and snaps its fingers. At the moment of the snap, a brief white flash fills the frame with a soft blur. Cinematic lighting, 4K, photorealistic product commercial.`
+      },
+      {
+        label: 'SHOT 2 · 真人出场推镜',
+        prompt: `A beautiful young European-American female model with glowing skin, wearing the same natural black long wavy wig, standing in the exact same position as the mannequin. She appears in a slow-push dolly shot moving gently forward. She lifts her chin slightly, meets the camera with confident eyes. Half-body framing, warm studio lighting, 4K cinematic ad.`
+      },
+      {
+        label: 'SHOT 3 · 侧面横移',
+        prompt: `Beautiful European-American female model wearing a long wavy black wig, camera slowly pans horizontally as she turns to a 45-degree profile. Soft side lighting highlights the wig's silhouette, volume, and hairline. Her hair gently moves as she turns. Half-body shot, shallow depth of field, luxury hair brand commercial, 4K.`
+      },
+      {
+        label: 'SHOT 4 · 背面环绕收尾',
+        prompt: `Gorgeous European-American female model with long wavy black wig, camera slowly orbits around her back as she lightly tosses her hair with one hand, revealing its full volume and length. She then turns back to face the camera with a warm smile. Slow camera arc, golden hour studio glow, cinematic 4K luxury commercial.`
+      }
+    ]
+  },
+  {
+    id: 'gf2', category: 'transform',
+    title: '镜中倒影 · 戴上假发变美',
+    subtitle: '梳妆镜前的魔法时刻',
+    tags: ['镜子', '变美', '戴假发'],
+    accent: '#8b5cf6',
+    shots: [
+      {
+        label: 'SHOT 1 · 镜前素颜',
+        prompt: `A beautiful European-American woman with natural short hair sits in front of a vanity mirror under soft warm lighting. She gazes at her reflection with a thoughtful expression, gently touching her cheek. Close-up half-body shot, lifestyle photography feel, natural morning light, 4K.`
+      },
+      {
+        label: 'SHOT 2 · 拿起假发',
+        prompt: `Close-up of elegant female hands holding a luxurious long wavy blonde wig, gently spreading the hair with fingers, the wig catching warm studio light, the hair strands showing their silky texture and natural sheen. Macro-style close-up, soft-focus background, 4K product photography.`
+      },
+      {
+        label: 'SHOT 3 · 佩戴过程',
+        prompt: `A European-American female model gracefully puts on a long wavy blonde wig while looking into a vanity mirror. Captured from behind and reflected in the mirror, she carefully adjusts the hairline with both hands. Slow motion, warm backlight, beautiful hair cascading down. 4K cinematic.`
+      },
+      {
+        label: 'SHOT 4 · 转身惊艳定格',
+        prompt: `Stunning European-American model with a perfectly styled long wavy blonde wig turns away from the mirror and faces the camera with a radiant, confident smile. The camera slowly pushes forward to a medium close-up. Her hair flows naturally, hairline perfectly blended. Soft beauty lighting, 4K luxury hair commercial.`
+      }
+    ]
+  },
+  {
+    id: 'gf3', category: 'transform',
+    title: '一摘一戴 · 反转惊喜',
+    subtitle: '摘下再戴，制造反差话题',
+    tags: ['反转', '摘发', '话题'],
+    accent: '#ec4899',
+    shots: [
+      {
+        label: 'SHOT 1 · 佩戴状态特写',
+        prompt: `Close-up portrait of a stunning European-American model wearing a perfectly fitted long curly auburn wig. She runs her fingers through the curls confidently, the hair bouncing naturally. Dramatic studio lighting, shallow depth of field, cinematic close-up, 4K.`
+      },
+      {
+        label: 'SHOT 2 · 俏皮示意',
+        prompt: `The same European-American model winks playfully at the camera and raises one hand to the edge of her wig hairline with a mischievous smile, as if about to reveal a secret. Close-up shot, soft beauty light, cinematic 4K. Fun and lighthearted mood.`
+      },
+      {
+        label: 'SHOT 3 · 摘下假发',
+        prompt: `European-American female model gracefully lifts off her long curly wig with both hands in slow motion, revealing her natural hair underneath. She shakes her head freely, still smiling. The removed wig is held up in one hand. Medium close-up, cinematic lighting, 4K.`
+      },
+      {
+        label: 'SHOT 4 · 对比展示',
+        prompt: `Split-screen comparison: left side shows European-American model with natural hair; right side shows her wearing the long curly auburn wig. Both sides mirror her confident smile. Clean white studio background, symmetrical framing, text overlay space at bottom, 4K product ad.`
+      }
+    ]
+  },
+
+  // ---- 产品展示类 ----
+  {
+    id: 'gf4', category: 'showcase',
+    title: '慢动作甩发 · 发丝飘逸',
+    subtitle: '高速摄影捕捉每一根发丝',
+    tags: ['慢动作', '发丝', '飘逸'],
+    accent: '#34a853',
+    shots: [
+      {
+        label: 'SHOT 1 · 正面慢速甩发',
+        prompt: `Slow-motion close-up of a beautiful European-American model wearing a long straight black wig. She gently shakes her head, sending silky hair strands floating through the air in perfect arcs. Side rim lighting creates a luminous halo around each strand. 120fps slow motion, 4K, luxury shampoo commercial aesthetic.`
+      },
+      {
+        label: 'SHOT 2 · 侧光发丝特写',
+        prompt: `Extreme close-up macro shot of the wig hair strands catching a warm side light, individual hairs visible and gleaming like silk threads. A female hand slowly runs through the hair, each strand flowing smoothly. Bokeh background, 4K cinematic product close-up.`
+      },
+      {
+        label: 'SHOT 3 · 背面旋转',
+        prompt: `European-American model with a long straight black wig turns 360 degrees slowly while her hair fans out in a perfect circle. Camera stays fixed at half-body level. Hair catches the light beautifully, showing full volume and length. Studio setting, cinematic 4K, slow motion.`
+      }
+    ]
+  },
+  {
+    id: 'gf5', category: 'showcase',
+    title: '发际线超近景 · 隐形蕾丝',
+    subtitle: '专门展示 HD Lace 发际线逼真细节',
+    tags: ['发际线', '蕾丝', '细节'],
+    accent: '#fbbc04',
+    shots: [
+      {
+        label: 'SHOT 1 · 正面发际线',
+        prompt: `Extreme close-up of a European-American model's forehead and hairline area wearing a HD lace front wig with natural brown hair. The lace melts invisibly into her skin tone, showing a perfectly natural-looking hairline. Camera slowly zooms in. Natural daylight, 4K ultra-detail, beauty & hair product close-up.`
+      },
+      {
+        label: 'SHOT 2 · 手指轻抚发际线',
+        prompt: `A finger gently traces along the hairline of a European-American model wearing an HD lace wig, showing how seamlessly the lace blends with her skin. Extremely close macro shot, soft diffused light, 4K. The hairline looks completely undetectable.`
+      },
+      {
+        label: 'SHOT 3 · 侧面轮廓展示',
+        prompt: `European-American model with a perfectly applied lace front wig photographed in side profile under strong directional light. The hairline curves naturally along her temple, completely invisible lace. Camera slowly orbits her head from side to 3/4 front view. 4K product commercial.`
+      },
+      {
+        label: 'SHOT 4 · 多角度旋转',
+        prompt: `360-degree slow orbit camera around a European-American model wearing a lace front wig. Starting from the back, moving around the side, pausing at the hairline, continuing to full front. Cinematic lighting highlights the wig's fit from every angle. 4K luxury hair commercial.`
+      }
+    ]
+  },
+  {
+    id: 'gf6', category: 'showcase',
+    title: '多造型变换 · 一发多用',
+    subtitle: '同一款假发展示多种日常造型',
+    tags: ['多造型', '百变', '实用'],
+    accent: '#ea4335',
+    shots: [
+      {
+        label: 'SHOT 1 · 大波浪自然散发',
+        prompt: `European-American model wearing a voluminous long wavy dark brown wig, half-body shot, natural loose waves cascading over shoulders. She runs fingers through waves confidently. Warm studio light, cinematic 4K, beauty commercial.`
+      },
+      {
+        label: 'SHOT 2 · 扎高马尾',
+        prompt: `Same European-American model pulling the long wavy wig into a high ponytail, tying it with practiced ease. The action is fluid and natural. Side-lit studio, medium close-up, the ponytail swings playfully. Upbeat, energetic mood. 4K.`
+      },
+      {
+        label: 'SHOT 3 · 侧编辫子',
+        prompt: `European-American model creating a quick side braid from the same long wavy wig, fingers weaving through the hair gracefully. Close-up on the braiding hands with bokeh background. Soft warm lighting, elegant mood, 4K cinematic.`
+      },
+      {
+        label: 'SHOT 4 · 发型合集定格',
+        prompt: `A triple-panel sequence showing the same European-American model with one wig styled three different ways: loose waves, high ponytail, and side braid. Each panel holds for 2 seconds. Clean white background, consistent lighting. Text space at top: "One Wig, Endless Styles." 4K commercial.`
+      }
+    ]
+  },
+  {
+    id: 'gf7', category: 'showcase',
+    title: '产品开箱 · 高端质感',
+    subtitle: '假发开箱，展示包装与工艺',
+    tags: ['开箱', '包装', '质感'],
+    accent: '#0ea5e9',
+    shots: [
+      {
+        label: 'SHOT 1 · 精美包装盒',
+        prompt: `Close-up of an elegant luxury hair product box being gently opened by feminine hands with natural nails. Inside, a high-quality lace wig is neatly arranged in tissue paper. Soft top lighting, marble surface, 4K product photography.`
+      },
+      {
+        label: 'SHOT 2 · 取出假发',
+        prompt: `Slow-motion close-up of a European-American model's hands carefully lifting a long silky straight wig from its packaging, the hair flowing downward like liquid silk. Warm backlight creates a glowing halo. 4K product commercial, macro detail.`
+      },
+      {
+        label: 'SHOT 3 · 展示发质',
+        prompt: `Female hands spreading and examining a premium human hair wig, the strands catching studio light and gleaming with natural highlights. The hair is incredibly smooth and lustrous. Close-up, white background, 4K beauty product shot.`
+      }
+    ]
+  },
+
+  // ---- 生活方式类 ----
+  {
+    id: 'gf8', category: 'lifestyle',
+    title: '晨间日常 · 咖啡窗光',
+    subtitle: '假发融入慵懒清晨生活',
+    tags: ['清晨', '咖啡', '日常'],
+    accent: '#f97316',
+    shots: [
+      {
+        label: 'SHOT 1 · 清晨窗边',
+        prompt: `European-American woman wearing a soft natural brown lace wig, standing by a sun-drenched window in a cozy apartment, holding a steaming coffee mug with both hands. Soft golden morning light floods in, her hair glowing warmly. Lifestyle photography, half-body, 4K.`
+      },
+      {
+        label: 'SHOT 2 · 拨发微笑',
+        prompt: `Close-up of a European-American woman tucking a strand of her medium-length brown wig behind her ear while smiling softly at something off-camera. Warm morning light, slightly messy natural-looking hair, intimate and genuine mood. 4K lifestyle photo.`
+      },
+      {
+        label: 'SHOT 3 · 推拉镜定格',
+        prompt: `Camera gently dollies back from a close-up of a European-American model's face (wearing a natural brown wig) to a half-body shot as she stands relaxed in a bright modern kitchen, coffee in hand. She turns to the camera with a soft smile. Warm morning tones, 4K lifestyle film.`
+      }
+    ]
+  },
+  {
+    id: 'gf9', category: 'lifestyle',
+    title: '海边度假 · 逆光飘发',
+    subtitle: '阳光沙滩，假发随风飞扬',
+    tags: ['海边', '度假', '逆光'],
+    accent: '#06b6d4',
+    shots: [
+      {
+        label: 'SHOT 1 · 沙滩漫步',
+        prompt: `Stunning European-American model with long wavy blonde wig walking barefoot along a sandy beach at golden hour. Her hair billows naturally in the ocean breeze. Camera tracks alongside in slow motion. Warm sunset backlighting creates a glowing halo around her hair. 4K cinematic beach commercial.`
+      },
+      {
+        label: 'SHOT 2 · 海风吹发',
+        prompt: `Close-up of a European-American model's face and hair as a coastal breeze blows her long wavy blonde wig in slow motion. She closes her eyes peacefully, then opens them to look at the camera. Warm backlight from the setting sun, 4K cinematic slow motion.`
+      },
+      {
+        label: 'SHOT 3 · 背对夕阳剪影',
+        prompt: `Silhouette shot of European-American model with long flowing wig hair standing on a beach, arms slightly raised, facing the sunset. Her hair blows dramatically in the wind creating a beautiful silhouette. Camera pulls back slowly to reveal the full ocean backdrop. 4K golden hour cinematography.`
+      },
+      {
+        label: 'SHOT 4 · 回眸一笑',
+        prompt: `European-American model with long blonde wavy wig on the beach turns from looking at the ocean to face the camera with a radiant smile, her hair sweeping across in slow motion. Medium close-up, warm golden light, shallow depth of field. 4K cinematic.`
+      }
+    ]
+  },
+  {
+    id: 'gf10', category: 'lifestyle',
+    title: '健身运动 · 马尾牢固',
+    subtitle: '运动中展示假发的高稳定性',
+    tags: ['运动', '马尾', '稳固'],
+    accent: '#10b981',
+    shots: [
+      {
+        label: 'SHOT 1 · 扎马尾准备',
+        prompt: `Athletic European-American woman in gym wear pulling her long dark wig into a high ponytail while looking into a mirror. She tightens it with confidence, checking the fit. Close-up, gym background slightly blurred, energetic lighting, 4K sports commercial.`
+      },
+      {
+        label: 'SHOT 2 · 跑步马尾摇摆',
+        prompt: `Side-angle shot of European-American woman running on a treadmill, her sleek high ponytail wig swinging rhythmically with each stride. Camera tracks at waist-to-head height. The wig stays perfectly in place. Upbeat energy, bright gym lighting, 4K sports brand commercial.`
+      },
+      {
+        label: 'SHOT 3 · 运动后展示',
+        prompt: `European-American fitness model after workout, slightly flushed cheeks, loosening her high ponytail wig and letting the hair cascade down. She runs fingers through it, hair still perfectly smooth. Confident smile. Close-up half body, gym lighting, 4K lifestyle film.`
+      }
+    ]
+  },
+  {
+    id: 'gf11', category: 'lifestyle',
+    title: '夜场派对 · 闪光暗调',
+    subtitle: '夜晚派对氛围，展示假发华丽感',
+    tags: ['夜场', '派对', '奢华'],
+    accent: '#8b5cf6',
+    shots: [
+      {
+        label: 'SHOT 1 · 夜场入场',
+        prompt: `A glamorous European-American woman wearing a long sleek black wig with a subtle shine enters a dimly lit upscale nightclub. Colorful ambient light and bokeh sparkle around her. She walks with absolute confidence, hair perfectly straight. Cinematic low-light, 4K.`
+      },
+      {
+        label: 'SHOT 2 · 发丝流光特写',
+        prompt: `Extreme close-up of silky black wig hair catching flashes of disco light in a nightclub, individual strands reflecting specks of gold and blue light. The hair appears incredibly lustrous. Abstract beauty shot, 4K cinematic.`
+      },
+      {
+        label: 'SHOT 3 · 旋转舞动',
+        prompt: `European-American model wearing a long sleek black wig dancing and spinning in a nightclub, hair flying out in a perfect arc, catching the light. Shot in slow motion to capture every hair detail. Dramatic lighting, cinematic 4K luxury.`
+      }
+    ]
+  },
+  {
+    id: 'gf12', category: 'lifestyle',
+    title: '办公室精英 · 职场气场',
+    subtitle: '干练假发造型，职业场景',
+    tags: ['职场', '精英', '干练'],
+    accent: '#3b82f6',
+    shots: [
+      {
+        label: 'SHOT 1 · 入镜登场',
+        prompt: `Confident European-American professional woman wearing a sleek medium-length straight dark wig walks through a modern office, colleagues in background. She carries a laptop under her arm. Camera tracks her from the side. Polished, powerful, cinematic 4K.`
+      },
+      {
+        label: 'SHOT 2 · 发型细节',
+        prompt: `Close-up portrait of European-American businesswoman with a neat medium bob wig in a modern office. She tucks hair behind her ear and adjusts her glasses. Sharp, clean-cut style. Professional beauty lighting, 4K.`
+      },
+      {
+        label: 'SHOT 3 · 会议室自信',
+        prompt: `European-American female executive with sleek straight wig sitting at a conference table, speaking confidently. Her well-groomed hair frames her face perfectly. Camera slowly pushes in to a close-up. 4K business cinematic.`
+      }
+    ]
+  },
+
+  // ---- 情绪风格类 ----
+  {
+    id: 'gf13', category: 'emotion',
+    title: '女王登场 · 全场焦点',
+    subtitle: '霸气气场，压制全场',
+    tags: ['女王', '霸气', '气场'],
+    accent: '#ea4335',
+    shots: [
+      {
+        label: 'SHOT 1 · 背影慢走',
+        prompt: `Slow-motion rear shot of a tall, statuesque European-American model with a voluminous long curly red wig walking down an empty marble corridor. Her hair bounces with each confident step. Dramatic directional lighting. Camera slowly pushes forward behind her. 4K cinematic fashion film.`
+      },
+      {
+        label: 'SHOT 2 · 转身正脸',
+        prompt: `European-American model with a bold long curly red wig spins gracefully to face the camera in a single fluid motion. Her expression is commanding and magnetic. The camera sits at a slightly low angle looking up at her. Dramatic chiaroscuro lighting, 4K luxury fashion film.`
+      },
+      {
+        label: 'SHOT 3 · 眼神直视定格',
+        prompt: `Intense beauty close-up of European-American model with dramatic red curly wig staring directly into the camera with powerful, unwavering eyes. Camera holds perfectly still for 3 seconds. Strong key light from above, dark background, 4K fashion campaign.`
+      }
+    ]
+  },
+  {
+    id: 'gf14', category: 'emotion',
+    title: '甜美邻家 · 歪头杀',
+    subtitle: '清新可爱，让人心动的甜妹',
+    tags: ['甜美', '可爱', '邻家'],
+    accent: '#ec4899',
+    shots: [
+      {
+        label: 'SHOT 1 · 甜美出场',
+        prompt: `A sweet, fresh-faced European-American young woman with a natural-looking medium wavy honey-brown wig sits in a sunlit room. She brushes hair from her face and smiles warmly at the camera. Close-up, natural soft light, airy and cheerful mood. 4K lifestyle film.`
+      },
+      {
+        label: 'SHOT 2 · 歪头杀',
+        prompt: `European-American model with a soft wavy honey-brown wig gently tilts her head to one side and smiles with bright eyes, a strand of hair falling across her cheek. Camera slowly zooms in to a close-up. Natural light, dreamy soft-focus background, 4K.`
+      },
+      {
+        label: 'SHOT 3 · 拨发浅笑',
+        prompt: `Close-up of European-American girl with cute medium wavy wig tucking hair behind her ear and looking down shyly, then glancing up at the camera with a soft laugh. Warm natural backlight, wispy hair details beautifully lit. 4K portrait film.`
+      }
+    ]
+  },
+  {
+    id: 'gf15', category: 'emotion',
+    title: '神秘感 · 遮眼拨发',
+    subtitle: '半遮半掩，欲说还休的神秘感',
+    tags: ['神秘', '遮眼', '高冷'],
+    accent: '#1e293b',
+    shots: [
+      {
+        label: 'SHOT 1 · 发帘遮眼',
+        prompt: `Close-up beauty shot of European-American model with long straight dark wig, hair falling in a sleek curtain over one eye. She looks through the parted strands with a piercing gaze. Moody dramatic lighting, one side lit, one in shadow. 4K cinematic editorial.`
+      },
+      {
+        label: 'SHOT 2 · 慢速拨开',
+        prompt: `Slow-motion close-up: European-American model with long dark straight wig slowly parts the hair covering her face with one hand, revealing her full face and intense expression. Each hair strand moves in perfect slow-motion detail. Moody backlit studio, 4K.`
+      },
+      {
+        label: 'SHOT 3 · 侧颜剪影',
+        prompt: `European-American model in sharp side-profile with long straight dark wig, a strong rim light outlining her hair against a deep shadow background. She stands completely still with a composed, mysterious expression. 4K editorial fashion photography.`
+      }
+    ]
+  },
+  {
+    id: 'gf16', category: 'emotion',
+    title: '法式优雅 · 慵懒贵气',
+    subtitle: '巴黎风情，高级慵懒感',
+    tags: ['优雅', '法式', '奢华'],
+    accent: '#d4a843',
+    shots: [
+      {
+        label: 'SHOT 1 · 慵懒倚靠',
+        prompt: `Elegantly dressed European-American woman with a chic medium-length blonde bob wig leans casually against a Parisian-style window frame. Morning light filters in softly. She sips espresso, expression serene and refined. Half-body, warm tones, 4K editorial lifestyle.`
+      },
+      {
+        label: 'SHOT 2 · 手指拨卷发',
+        prompt: `Close-up of European-American model with a sophisticated wavy blonde bob, slowly curling a strand around her finger with a languid, graceful movement. Warm diffused light, cream and gold tones, French editorial aesthetic, 4K.`
+      },
+      {
+        label: 'SHOT 3 · 轻点嘴唇',
+        prompt: `Refined European-American model with elegant blonde bob wig lightly touches her fingertip to her lips in a classic French elegance gesture, looking slightly to the side with a knowing, subtle smile. Close-up, 4K, luxury perfume commercial aesthetic.`
+      }
+    ]
+  },
+
+  // ---- 特殊场景类 ----
+  {
+    id: 'gf17', category: 'scene',
+    title: '雨中氛围 · 湿发质感',
+    subtitle: '雨水打湿假发，浪漫电影感',
+    tags: ['雨天', '湿发', '电影感'],
+    accent: '#0284c7',
+    shots: [
+      {
+        label: 'SHOT 1 · 雨中站立',
+        prompt: `Cinematic shot of a beautiful European-American woman wearing a long straight dark wig standing in light rain on an empty city street at night. The wet hair clings elegantly to her shoulders. Bokeh city lights in background, puddle reflections below. Camera slowly pulls back. 4K moody cinematic.`
+      },
+      {
+        label: 'SHOT 2 · 湿发特写',
+        prompt: `Close-up of European-American model's wet hair after rain, individual strands glistening and clumping naturally, water droplets catching neon light. She slowly runs her hand through the wet hair, it parts smoothly. 4K cinematic macro beauty shot.`
+      },
+      {
+        label: 'SHOT 3 · 回眸',
+        prompt: `European-American model in rain turns from walking away and looks back over her shoulder with a smoldering expression, wet dark hair partially obscuring one eye. Slow motion, city night rain backdrop, 4K dramatic cinematic.`
+      }
+    ]
+  },
+  {
+    id: 'gf18', category: 'scene',
+    title: '花园春日 · 自然浪漫',
+    subtitle: '鲜花丛中，假发与自然同框',
+    tags: ['花园', '春天', '浪漫'],
+    accent: '#84cc16',
+    shots: [
+      {
+        label: 'SHOT 1 · 花丛穿行',
+        prompt: `European-American woman with long wavy auburn wig strolls through a blooming flower garden in spring sunlight. Flower petals drift past as she walks slowly, her hair catching the golden afternoon light. Camera tracks alongside gently. Romantic, dreamy mood. 4K.`
+      },
+      {
+        label: 'SHOT 2 · 花朵与发丝',
+        prompt: `Close-up beauty shot: European-American model with wavy auburn hair in a garden, a fresh flower tucked behind her ear. Camera slowly pulls focus from the flower to her face, then to her hair flowing in a gentle breeze. 4K romantic editorial.`
+      },
+      {
+        label: 'SHOT 3 · 仰拍逆光',
+        prompt: `Low angle upward shot of European-American model with long auburn wavy wig standing in a sunflower field, backlit by the sun. Her hair forms a glowing halo of auburn-gold light. She gazes off into the distance peacefully. 4K dreamy romantic film.`
+      }
+    ]
+  },
+  {
+    id: 'gf19', category: 'scene',
+    title: '游泳池畔 · 夏日写真',
+    subtitle: '泳池边，湿润光泽感拍摄',
+    tags: ['泳池', '夏天', '清凉'],
+    accent: '#22d3ee',
+    shots: [
+      {
+        label: 'SHOT 1 · 泳池边缘',
+        prompt: `Gorgeous European-American model in a stylish swimsuit with a sleek wet-look dark wig sitting at the edge of a luxury pool. Her legs dangle in the blue water, hair gleaming in bright sunlight. Camera is at pool level, wide to medium shot. 4K summer campaign.`
+      },
+      {
+        label: 'SHOT 2 · 出水回眸',
+        prompt: `European-American model with water-resistant sleek dark wig emerging from a pool in slow motion, water cascading off her hair in sparkling streams. She smooths back her hair with both hands in a classic beauty move. 4K high-speed slow motion.`
+      },
+      {
+        label: 'SHOT 3 · 阳光折射发丝',
+        prompt: `Close-up of European-American model's wet hair by the poolside in bright summer sun, droplets of water still clinging to each perfectly straight strand, catching the light like diamonds. Her hair looks impeccably healthy. Macro beauty, 4K.`
+      }
+    ]
+  },
+  {
+    id: 'gf20', category: 'scene',
+    title: '秋日街拍 · 城市穿搭',
+    subtitle: '秋天街头，假发与穿搭完美搭配',
+    tags: ['街拍', '秋天', '城市'],
+    accent: '#f59e0b',
+    shots: [
+      {
+        label: 'SHOT 1 · 街道行走',
+        prompt: `Stylish European-American woman with a chic medium-length auburn lob wig walks down a tree-lined autumn street, fallen leaves drifting past. She wears a trench coat, the warm tones matching her hair perfectly. Camera tracks alongside. 4K fashion editorial film.`
+      },
+      {
+        label: 'SHOT 2 · 街角定格',
+        prompt: `European-American fashion model with auburn lob wig pauses at a corner, turning to look at the camera. Warm autumn light catches her hair, the city in soft focus behind her. Camera slowly pushes in to medium close-up. 4K street style fashion.`
+      },
+      {
+        label: 'SHOT 3 · 风中拨发',
+        prompt: `Close-up beauty shot of European-American model on an autumn city street, a gust of wind catches her auburn lob wig and she sweeps it back behind her ear with a natural, practiced gesture. Expression confident and effortless. 4K fashion editorial.`
+      }
+    ]
+  }
+];
+
+// ========== 渲染 Gemini Flow ==========
+function renderGeminiFlow(filter = 'all') {
+    const container = document.getElementById('gemini-container');
+    if (!container) return;
+    const list = filter === 'all' ? geminiFlowData : geminiFlowData.filter(d => d.category === filter);
+    container.innerHTML = list.map(item => `
+        <div class="gf-card">
+            <div class="gf-card-header" onclick="toggleGF('${item.id}')">
+                <div style="flex:1;">
+                    <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px;">
+                        <span style="width:4px; height:28px; background:${item.accent}; border-radius:2px; flex-shrink:0;"></span>
+                        <div>
+                            <div style="font-weight:700; font-size:15px;">${item.title}</div>
+                            <div style="color:#64748b; font-size:12px; margin-top:2px;">${item.subtitle}</div>
+                        </div>
+                    </div>
+                    <div style="display:flex; gap:5px; flex-wrap:wrap; padding-left:12px;">
+                        ${item.tags.map(t => `<span class="tag" style="background:#1e3a5f; color:#7dd3fc;">${t}</span>`).join('')}
+                        <span class="tag" style="background:#1a3a2a; color:#6ee7b7;">${item.shots.length} shots</span>
+                    </div>
+                </div>
+                <span id="gf-arrow-${item.id}" style="color:#475569; font-size:18px; flex-shrink:0;">▼</span>
+            </div>
+            <div id="gf-body-${item.id}" class="gf-card-body">
+                <div style="padding:0 16px 16px;">
+                    ${item.shots.map((s, i) => `
+                        <div style="margin-bottom:14px;">
+                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                                <span style="font-size:12px; font-weight:600; color:${item.accent};">${s.label}</span>
+                                <button class="copy-btn" onclick="copyGFShot(event, '${item.id}', ${i})" style="font-size:11px; padding:3px 10px;">复制</button>
+                            </div>
+                            <div class="gf-shot" style="border-left-color:${item.accent};" id="gf-shot-${item.id}-${i}">${s.prompt}</div>
+                        </div>
+                    `).join('')}
+                    <button class="copy-btn" onclick="copyGFAll(event, '${item.id}')" style="width:100%; padding:8px; margin-top:4px; background:#1e3a5f; color:#7dd3fc; border-color:#2563eb;">📋 复制全部镜头</button>
+                </div>
+            </div>
+        </div>
+    `).join('');
+}
+
+function toggleGF(id) {
+    const body = document.getElementById('gf-body-' + id);
+    const arrow = document.getElementById('gf-arrow-' + id);
+    body.classList.toggle('open');
+    arrow.textContent = body.classList.contains('open') ? '▲' : '▼';
+}
+
+function copyGFShot(event, id, idx) {
+    const el = document.getElementById(`gf-shot-${id}-${idx}`);
+    navigator.clipboard.writeText(el.innerText).then(() => {
+        const btn = event.target;
+        btn.textContent = '✓ 已复制'; btn.style.color = '#10b981';
+        setTimeout(() => { btn.textContent = '复制'; btn.style.color = ''; }, 1500);
+    });
+}
+
+function copyGFAll(event, id) {
+    const item = geminiFlowData.find(d => d.id === id);
+    if (!item) return;
+    const text = item.shots.map((s, i) => `[${s.label}]\n${s.prompt}`).join('\n\n---\n\n');
+    navigator.clipboard.writeText(text).then(() => {
+        const btn = event.target;
+        btn.textContent = '✓ 全部已复制'; btn.style.color = '#10b981';
+        setTimeout(() => { btn.textContent = '📋 复制全部镜头'; btn.style.color = ''; }, 1500);
+    });
+}
+
+function filterGemini(category, btnEl) {
+    document.querySelectorAll('.gf-filter-btn').forEach(b => b.classList.remove('active'));
+    btnEl.classList.add('active');
+    renderGeminiFlow(category);
+}
+
+// 初始化
+renderCreative();
+renderGeminiFlow();
+renderPrompts();
+renderScenes();
+renderImagePrompts();
+
+// 页面加载完成
+document.addEventListener('DOMContentLoaded', function() {
+    // 初始化完成，无需额外操作
+});
+
+// ========== 平台标签排序功能（编辑模式下可用） ==========
+let platformDraggedItem = null;
+
+function enablePlatformSorting() {
+    const container = document.getElementById('platform-tags-container');
+    if (!container) return;
+    
+    const tags = container.querySelectorAll('.platform-sortable');
+    
+    tags.forEach(tag => {
+        tag.classList.add('platform-sorting');
+        tag.draggable = true;
+        
+        // 添加排序指示器
+        if (!tag.querySelector('.sort-indicator')) {
+            const indicator = document.createElement('span');
+            indicator.innerHTML = ' ⋮';
+            indicator.style.cssText = 'margin-left:3px; opacity:0.6; font-size:9px;';
+            indicator.className = 'sort-indicator';
+            tag.appendChild(indicator);
+        }
+        
+        // 绑定拖拽事件
+        tag.addEventListener('dragstart', handlePlatformDragStart);
+        tag.addEventListener('dragover', handlePlatformDragOver);
+        tag.addEventListener('drop', handlePlatformDrop);
+        tag.addEventListener('dragend', handlePlatformDragEnd);
+    });
+}
+
+function disablePlatformSorting() {
+    const container = document.getElementById('platform-tags-container');
+    if (!container) return;
+    
+    const tags = container.querySelectorAll('.platform-sortable');
+    
+    tags.forEach(tag => {
+        tag.classList.remove('platform-sorting', 'platform-dragging', 'platform-drop-target');
+        tag.draggable = false;
+        
+        // 移除排序指示器
+        const indicator = tag.querySelector('.sort-indicator');
+        if (indicator) {
+            indicator.remove();
+        }
+        
+        // 移除拖拽事件
+        tag.removeEventListener('dragstart', handlePlatformDragStart);
+        tag.removeEventListener('dragover', handlePlatformDragOver);
+        tag.removeEventListener('drop', handlePlatformDrop);
+        tag.removeEventListener('dragend', handlePlatformDragEnd);
+    });
+    
+    platformDraggedItem = null;
+}
+
+function handlePlatformDragStart(e) {
+    platformDraggedItem = e.target;
+    e.target.classList.add('platform-dragging');
+    e.dataTransfer.effectAllowed = 'move';
+}
+
+function handlePlatformDragOver(e) {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    
+    const target = e.target.closest('.platform-sortable');
+    if (target && target !== platformDraggedItem) {
+        target.classList.add('platform-drop-target');
+    }
+}
+
+function handlePlatformDrop(e) {
+    e.preventDefault();
+    
+    const target = e.target.closest('.platform-sortable');
+    if (target && target !== platformDraggedItem) {
+        const container = document.getElementById('platform-tags-container');
+        
+        // 获取父级<a>元素进行移动
+        const draggedLink = platformDraggedItem.parentElement;
+        const targetLink = target.parentElement;
+        
+        const allLinks = Array.from(container.querySelectorAll('.platform-tag-link'));
+        const draggedIndex = allLinks.indexOf(draggedLink);
+        const targetIndex = allLinks.indexOf(targetLink);
+        
+        if (draggedIndex < targetIndex) {
+            container.insertBefore(draggedLink, targetLink.nextSibling);
+        } else {
+            container.insertBefore(draggedLink, targetLink);
+        }
+    }
+}
+
+function handlePlatformDragEnd(e) {
+    e.target.classList.remove('platform-dragging');
+    
+    const container = document.getElementById('platform-tags-container');
+    const tags = container.querySelectorAll('.platform-sortable');
+    tags.forEach(tag => {
+        tag.classList.remove('platform-drop-target');
+    });
+    
+    platformDraggedItem = null;
+}
+</script>
+
+</body>
+</html>
